@@ -57,6 +57,7 @@ void loop(void);
 void printValues();
 void displayValues();
 void displaySensorDetails(void);
+void displaySensorOffsets(const adafruit_bno055_offsets_t &calibData);
 #line 49 "z:/Personal/Electronics/particle/fram_i2c_display_bme280_9dof/src/fram_i2c_display_bme280_9dof.ino"
 Adafruit_EEPROM_I2C i2ceeprom;
 //Adafruit_FRAM_I2C i2ceeprom;
@@ -188,7 +189,7 @@ void setup(void) {
   displaySensorDetails();
 
   //add a test for fram
-  
+
 if (i2ceeprom.begin(0x50)) {  // you can stick the new i2c addr in here, e.g. begin(0x51);
     Serial.println("Found I2C EEPROM");
   } else {
@@ -233,36 +234,36 @@ if (i2ceeprom.begin(0x50)) {  // you can stick the new i2c addr in here, e.g. be
   Serial.print(max_addr);
   Serial.println(" bytes");
     
-  // validate the memory////////////////////////////////////////////////////////////////////
-  Serial.println("Validating every address in memory");
-  uint8_t val;
-  for (uint16_t addr = 0; addr < max_addr; addr++) {
-    if (addr % 32 == 0) {
-      Serial.print("Testing address ");
-      Serial.print(addr);
-      Serial.print(" thru ");
-      Serial.println(addr+31);
-    }
-    val = i2ceeprom.read(addr);
+  // // validate the memory////////////////////////////////////////////////////////////////////
+  // Serial.println("Validating every address in memory");
+  // uint8_t val;
+  // for (uint16_t addr = 0; addr < max_addr; addr++) {
+  //   if (addr % 32 == 0) {
+  //     Serial.print("Testing address ");
+  //     Serial.print(addr);
+  //     Serial.print(" thru ");
+  //     Serial.println(addr+31);
+  //   }
+  //   val = i2ceeprom.read(addr);
     
-    i2ceeprom.write(addr, 0x55);
-    if (i2ceeprom.read(addr) != 0x55) {
-      Serial.print("Failed to write 0x55 to address 0x");
-      Serial.println(addr, HEX);
-    }
-    i2ceeprom.write(addr, 0xAA);
-    if (i2ceeprom.read(addr) != 0xAA) {
-      Serial.print("Failed to write 0xAA to address 0x");
-      Serial.println(addr, HEX);
-    }
+  //   i2ceeprom.write(addr, 0x55);
+  //   if (i2ceeprom.read(addr) != 0x55) {
+  //     Serial.print("Failed to write 0x55 to address 0x");
+  //     Serial.println(addr, HEX);
+  //   }
+  //   i2ceeprom.write(addr, 0xAA);
+  //   if (i2ceeprom.read(addr) != 0xAA) {
+  //     Serial.print("Failed to write 0xAA to address 0x");
+  //     Serial.println(addr, HEX);
+  //   }
     
-    i2ceeprom.write(addr, val);
-    if (i2ceeprom.read(addr) != val) {
-      Serial.print("Failed to write original value to address 0x");
-      Serial.println(addr, HEX);
-    }
-  }
-  Serial.println("Validated!");
+  //   i2ceeprom.write(addr, val);
+  //   if (i2ceeprom.read(addr) != val) {
+  //     Serial.print("Failed to write original value to address 0x");
+  //     Serial.println(addr, HEX);
+  //   }
+  // }
+  // Serial.println("Validated!");
   
 }
 
@@ -276,17 +277,6 @@ void loop(void) {
   /* Get a new sensor event */
   sensors_event_t event;
   bno.getEvent(&event);
-
-  /* Board layout:
-         +----------+
-         |         *| RST   PITCH  ROLL  HEADING
-     ADR |*        *| SCL
-     INT |*        *| SDA     ^            /->
-     PS1 |*        *| GND     |            |
-     PS0 |*        *| 3VO     Y    Z-->    \-X
-         |         *| VIN
-         +----------+
-  */
 
 printValues();
   displayValues();
@@ -356,7 +346,13 @@ printValues();
   Serial.print("compass heading:  ");
   Serial.print(compass_heading, 4);
 
-  delay(BNO055_SAMPLERATE_DELAY_MS);
+
+
+      adafruit_bno055_offsets_t newCalib;
+    bno.getSensorOffsets(newCalib);
+    displaySensorOffsets(newCalib);
+
+      delay(BNO055_SAMPLERATE_DELAY_MS);
 }
 
 
@@ -432,4 +428,28 @@ void displaySensorDetails(void)
   Serial.println("------------------------------------");
   Serial.println("");
   delay(500);
+}
+
+void displaySensorOffsets(const adafruit_bno055_offsets_t &calibData)
+{
+    Serial.print("Accelerometer: ");
+    Serial.print(calibData.accel_offset_x); Serial.print(" ");
+    Serial.print(calibData.accel_offset_y); Serial.print(" ");
+    Serial.print(calibData.accel_offset_z); Serial.print(" ");
+
+    Serial.print("\nGyro: ");
+    Serial.print(calibData.gyro_offset_x); Serial.print(" ");
+    Serial.print(calibData.gyro_offset_y); Serial.print(" ");
+    Serial.print(calibData.gyro_offset_z); Serial.print(" ");
+
+    Serial.print("\nMag: ");
+    Serial.print(calibData.mag_offset_x); Serial.print(" ");
+    Serial.print(calibData.mag_offset_y); Serial.print(" ");
+    Serial.print(calibData.mag_offset_z); Serial.print(" ");
+
+    Serial.print("\nAccel Radius: ");
+    Serial.print(calibData.accel_radius);
+
+    Serial.print("\nMag Radius: ");
+    Serial.print(calibData.mag_radius);
 }
