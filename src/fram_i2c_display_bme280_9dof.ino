@@ -419,7 +419,7 @@ void displaySensorDetails(void)
 
 void displaySensorOffsets(const adafruit_bno055_offsets_t &calibData)
 {
-    Serial.println("Calibration offsets");
+    Serial.println("Calibration offsets \n");
     Serial.print("Accelerometer: ");
     Serial.print(calibData.accel_offset_x); Serial.print(" ");
     Serial.print(calibData.accel_offset_y); Serial.print(" ");
