@@ -54,6 +54,8 @@
 */
 void setup(void);
 void loop(void);
+void displaySensorStatus(void);
+void displayCalStatus(void);
 void printValues();
 void displayValues();
 void displaySensorDetails(void);
@@ -118,6 +120,12 @@ Adafruit_BNO055 bno = Adafruit_BNO055(55, 0x28);
 */
 /**************************************************************************/
 void setup(void) {
+//variables for calibration read from memory
+int test = 55;
+    int eeAddress = 0;
+    long bnoID;
+    bool foundCalib = false;
+
   Serial.begin(115200);
 
     while(!Serial);    // time to get serial running
@@ -172,22 +180,6 @@ void setup(void) {
   Serial.begin(9600);
   Serial.println("WebSerial 3D Firmware"); Serial.println("");
 
-  /* Initialise the sensor */
-  if(!bno.begin())
-  {
-    /* There was a problem detecting the BNO055 ... check your connections */
-    Serial.print("Ooops, no BNO055 detected ... Check your wiring or I2C ADDR!");
-    while(1);
-  }
-   
-  delay(1000);
-
-  /* Use external crystal for better accuracy */
-  bno.setExtCrystalUse(true);
-   
-  /* Display some basic information on this sensor */
-  displaySensorDetails();
-
   //add a test for fram
 
 if (i2ceeprom.begin(0x50)) {  // you can stick the new i2c addr in here, e.g. begin(0x51);
@@ -197,9 +189,9 @@ if (i2ceeprom.begin(0x50)) {  // you can stick the new i2c addr in here, e.g. be
     while (1) delay(10);
   }
   
-  // Write the first byte to 0xAF
-  uint8_t test = 0xAF;
-  i2ceeprom.write(0x0, test);
+  // // Write the first byte to 0xAF
+  // uint8_t test = 0xAF;
+  // i2ceeprom.write(0x0, test);
 
   // Try to determine the size by writing a value and seeing if it changes the first byte
   Serial.println("Testing size!");
@@ -233,6 +225,123 @@ if (i2ceeprom.begin(0x50)) {  // you can stick the new i2c addr in here, e.g. be
   Serial.print("This EEPROM can store ");
   Serial.print(max_addr);
   Serial.println(" bytes");
+
+
+
+  /* Initialise the sensor */
+  if(!bno.begin())
+  {
+    /* There was a problem detecting the BNO055 ... check your connections */
+    Serial.print("Ooops, no BNO055 detected ... Check your wiring or I2C ADDR!");
+    while(1);
+  }
+   
+  delay(1000);
+
+  /* Use external crystal for better accuracy */
+  bno.setExtCrystalUse(true);
+   
+  /* Display some basic information on this sensor */
+  displaySensorDetails();
+
+    EEPROM.get(eeAddress, bnoID);
+
+    adafruit_bno055_offsets_t calibrationData;
+    sensor_t sensor;
+
+    /*
+    *  Look for the sensor's unique ID at the beginning oF EEPROM.
+    *  This isn't foolproof, but it's better than nothing.
+    */
+    bno.getSensor(&sensor);
+    if (bnoID != sensor.sensor_id)
+    {
+        Serial.println("\nNo Calibration Data for this sensor exists in EEPROM");
+        delay(500);
+    }
+    else
+    {
+        Serial.println("\nFound Calibration for this sensor in EEPROM.");
+        eeAddress += sizeof(long);
+        EEPROM.get(eeAddress, calibrationData);
+
+        displaySensorOffsets(calibrationData);
+
+        Serial.println("\n\nRestoring Calibration data to the BNO055...");
+        bno.setSensorOffsets(calibrationData);
+
+        Serial.println("\n\nCalibration data loaded into BNO055");
+        foundCalib = true;
+    }
+
+    delay(1000);
+
+    /* Display some basic information on this sensor */
+    displaySensorDetails();
+
+    /* Optional: Display current status */
+    displaySensorStatus();
+
+   /* Crystal must be configured AFTER loading calibration data into BNO055. */
+    bno.setExtCrystalUse(true);
+
+    sensors_event_t event;
+    bno.getEvent(&event);
+    /* always recal the mag as It goes out of calibration very often */
+    if (foundCalib){
+        Serial.println("Move sensor slightly to calibrate magnetometers");
+        while (!bno.isFullyCalibrated())
+        {
+            bno.getEvent(&event);
+            delay(BNO055_SAMPLERATE_DELAY_MS);
+        }
+    }
+    else
+    {
+        Serial.println("Please Calibrate Sensor: ");
+        while (!bno.isFullyCalibrated())
+        {
+            bno.getEvent(&event);
+
+            Serial.print("X: ");
+            Serial.print(event.orientation.x, 4);
+            Serial.print("\tY: ");
+            Serial.print(event.orientation.y, 4);
+            Serial.print("\tZ: ");
+            Serial.print(event.orientation.z, 4);
+
+            /* Optional: Display calibration status */
+            displayCalStatus();
+
+            /* New line for the next sample */
+            Serial.println("");
+
+            /* Wait the specified delay before requesting new data */
+            delay(BNO055_SAMPLERATE_DELAY_MS);
+        }
+    }
+
+    Serial.println("\nFully calibrated!");
+    Serial.println("--------------------------------");
+    Serial.println("Calibration Results: ");
+    adafruit_bno055_offsets_t newCalib;
+    bno.getSensorOffsets(newCalib);
+    displaySensorOffsets(newCalib);
+
+    Serial.println("\n\nStoring calibration data to EEPROM...");
+
+    eeAddress = 0;
+    bno.getSensor(&sensor);
+    bnoID = sensor.sensor_id;
+
+    EEPROM.put(eeAddress, bnoID);
+
+    eeAddress += sizeof(long);
+    EEPROM.put(eeAddress, newCalib);
+    Serial.println("Data stored to EEPROM.");
+
+    Serial.println("\n--------------------------------\n");
+    delay(500);
     
   // // validate the memory////////////////////////////////////////////////////////////////////
   // Serial.println("Validating every address in memory");
@@ -355,6 +464,62 @@ printValues();
       delay(BNO055_SAMPLERATE_DELAY_MS);
 }
 
+/**************************************************************************/
+/*
+    Display some basic info about the sensor status
+    */
+/**************************************************************************/
+
+void displaySensorStatus(void)
+{
+    /* Get the system status values (mostly for debugging purposes) */
+    uint8_t system_status, self_test_results, system_error;
+    system_status = self_test_results = system_error = 0;
+    bno.getSystemStatus(&system_status, &self_test_results, &system_error);
+
+    /* Display the results in the Serial Monitor */
+    Serial.println("");
+    Serial.print("System Status: 0x");
+    Serial.println(system_status, HEX);
+    Serial.print("Self Test:     0x");
+    Serial.println(self_test_results, HEX);
+    Serial.print("System Error:  0x");
+    Serial.println(system_error, HEX);
+    Serial.println("");
+    delay(500);
+}
+
+/**************************************************************************/
+/*
+    Display sensor calibration status
+    */
+/**************************************************************************/
+void displayCalStatus(void)
+{
+    /* Get the four calibration values (0..3) */
+    /* Any sensor data reporting 0 should be ignored, */
+    /* 3 means 'fully calibrated" */
+    uint8_t system, gyro, accel, mag;
+    system = gyro = accel = mag = 0;
+    bno.getCalibration(&system, &gyro, &accel, &mag);
+
+    /* The data should be ignored until the system calibration is > 0 */
+    Serial.print("\t");
+    if (!system)
+    {
+        Serial.print("! ");
+    }
+
+    /* Display the individual values */
+    Serial.print("Sys:");
+    Serial.print(system, DEC);
+    Serial.print(" G:");
+    Serial.print(gyro, DEC);
+    Serial.print(" A:");
+    Serial.print(accel, DEC);
+    Serial.print(" M:");
+    Serial.print(mag, DEC);
+}
 
 void printValues() {
     Serial.print("Temperature = ");
