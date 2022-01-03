@@ -14,6 +14,7 @@
 #include <Adafruit_BME280.h>
 #include "Adafruit_EEPROM_I2C.h"
 #include "Adafruit_FRAM_I2C.h"
+#include "math.h"
 
 /* Example code for the Adafruit I2C EEPROM/FRAM breakout */
 
@@ -60,7 +61,9 @@ void printValues();
 void displayValues();
 void displaySensorDetails(void);
 void displaySensorOffsets(const adafruit_bno055_offsets_t &calibData);
-#line 49 "z:/Personal/Electronics/particle/fram_i2c_display_bme280_9dof/src/fram_i2c_display_bme280_9dof.ino"
+void getHeading(int direction);
+void isr_rotation ();
+#line 50 "z:/Personal/Electronics/particle/fram_i2c_display_bme280_9dof/src/fram_i2c_display_bme280_9dof.ino"
 Adafruit_EEPROM_I2C i2ceeprom;
 //Adafruit_FRAM_I2C i2ceeprom;
 
@@ -112,7 +115,26 @@ float compass_heading;
 //                                   id, address
 Adafruit_BNO055 bno = Adafruit_BNO055(55, 0x28);
 
+/**************************************************************************/
+/*
+    Wind speed and direction variables
+*/
+/**************************************************************************/
+int VaneValue;// raw analog value from wind vane
+int Direction;// translated 0 - 360 direction
+int CalDirection;// converted value with offset applied
+int LastValue;
+uint16_t wind_speed_time_interval= 5000; //value in ms
+uint32_t wind_speed_time = 0;
+uint8_t vane_pin = A0;
+uint8_t vane_switch = D5;
+uint8_t wind_pin = D6;
+volatile unsigned long Rotations = 0; // cup rotation counter used in interrupt routine
+volatile unsigned long ContactBounceTime; // Timer to avoid contact bounce in interrupt routine
 
+float WindSpeed; // speed miles per hour
+
+#define Offset 0;
 
 /**************************************************************************/
 /*
@@ -120,6 +142,21 @@ Adafruit_BNO055 bno = Adafruit_BNO055(55, 0x28);
 */
 /**************************************************************************/
 void setup(void) {
+//wind speed and direction setup
+LastValue = 1;
+
+pinMode(vane_pin, INPUT);
+pinMode(vane_switch, OUTPUT);
+Serial.println("Vane Value\tDirection\tHeading");
+
+pinMode(wind_pin, INPUT);
+attachInterrupt(wind_pin, isr_rotation, FALLING);
+
+Serial.println("Davis Wind Speed Test");
+Serial.println("Rotations\tMPH");
+
+
+
 //variables for calibration read from memory
 int test = 55;
     int eeAddress = 0;
@@ -383,6 +420,42 @@ if (i2ceeprom.begin(0x50)) {  // you can stick the new i2c addr in here, e.g. be
 */
 /**************************************************************************/
 void loop(void) {
+//wind speed and direction
+digitalWrite(vane_switch, HIGH);
+VaneValue = analogRead(vane_pin);
+//digitalWrite(vane_switch, LOW);
+//Serial.println("analog read value = ");
+//Serial.print(VaneValue);
+Direction = map(VaneValue, 0, 4095, 0, 360);
+CalDirection = Direction + Offset;
+
+if(CalDirection > 360)
+CalDirection = CalDirection - 360;
+
+if(CalDirection < 0)
+CalDirection = CalDirection + 360;
+
+
+//delay(100);
+if ((millis() - wind_speed_time) > wind_speed_time_interval) {
+// Only update the display if change greater than 2 degrees.
+  if(abs(CalDirection - LastValue) > 5)
+  {
+  Serial.print(VaneValue); Serial.print("\t\t");
+  Serial.print(CalDirection); Serial.print("\t\t");
+  getHeading(CalDirection);
+  LastValue = CalDirection;
+  }
+WindSpeed = Rotations * .45;
+
+Serial.print(Rotations); Serial.print("\t\t");
+Serial.print(WindSpeed); Serial.print("\t\t");  Serial.println(" mph");
+wind_speed_time = millis();
+Rotations = 0;  // Set Rotations count to 0 ready for calculations
+// convert to mp/h using the formula V=P(2.25/T)
+// V = P(2.25/3) = P * 0.75
+}
+
   /* Get a new sensor event */
   sensors_event_t event;
   bno.getEvent(&event);
@@ -618,4 +691,35 @@ void displaySensorOffsets(const adafruit_bno055_offsets_t &calibData)
 
     Serial.print("\nMag Radius: ");
     Serial.print(calibData.mag_radius);
+}
+// Converts compass direction to heading
+void getHeading(int direction) {
+if(direction < 22)
+Serial.println("N");
+else if (direction < 67)
+Serial.println("NE");
+else if (direction < 112)
+Serial.println("E");
+else if (direction < 157)
+Serial.println("SE");
+else if (direction < 212)
+Serial.println("S");
+else if (direction < 247)
+Serial.println("SW");
+else if (direction < 292)
+Serial.println("W");
+else if (direction < 337)
+Serial.println("NW");
+else
+Serial.println("N");
+} 
+
+// This is the function that the interrupt calls to increment the rotation count
+void isr_rotation () {
+
+if ((millis() - ContactBounceTime) > 15 ) { // debounce the switch contact.
+Rotations++;
+ContactBounceTime = millis();
+}
+
 }
