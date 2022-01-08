@@ -502,7 +502,7 @@ printValues();
 
   Serial.println("\n\n");
 
-  compass_heading = event.orientation.x + 51.6;
+  compass_heading = event.orientation.x +285;
 
   if(compass_heading > 360) {
     compass_heading = compass_heading - 360;
@@ -578,7 +578,7 @@ void displayCalStatus(void)
 }
 
 void printValues() {
-    Serial.print("Temperature = ");
+    Serial.print("\n\nTemperature = ");
     Serial.print(bme.readTemperature()*1.8F + 32.);
     Serial.println(" F");
 
@@ -653,7 +653,7 @@ void displaySensorDetails(void)
 
 void displaySensorOffsets(const adafruit_bno055_offsets_t &calibData)
 {
-    Serial.println("Calibration offsets \n");
+    Serial.println("\nCalibration offsets \n");
     Serial.print("Accelerometer: ");
     Serial.print(calibData.accel_offset_x); Serial.print(" ");
     Serial.print(calibData.accel_offset_y); Serial.print(" ");
