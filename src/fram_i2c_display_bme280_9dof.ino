@@ -10,47 +10,10 @@
 #include "Adafruit_FRAM_I2C.h"
 #include "math.h"
 
-/* Example code for the Adafruit I2C EEPROM/FRAM breakout */
-
-/* Connect SCL    to SCL
-   Connect SDA    to SDA
-   Connect VDD    to 3 - 5V DC
-   Connect GROUND to common ground */
-   
-
-
-//#include <Adafruit_bno055/utility/imumaths.h>
-
-/* Returns the IMU data as both a euler angles and quaternions as the WebSerial
-   3D Model viewer at https://adafruit-3dmodel-viewer.glitch.me/ expects.
- 
-   This driver uses the Adafruit unified sensor library (Adafruit_Sensor),
-   which provides a common 'type' for sensor data and some helper functions.
-
-   To use this driver you will also need to download the Adafruit_Sensor
-   library and include it in your libraries folder.
-
-   You should also assign a unique ID to this sensor for use with
-   the Adafruit Sensor API so that you can identify this particular
-   sensor in any data logs, etc.  To assign a unique ID, simply
-   provide an appropriate value in the constructor below (12345
-   is used by default in this example).
-
-   Connections
-   ===========
-   Connect SCL to analog 5
-   Connect SDA to analog 4
-   Connect VDD to 3.3-5V DC
-   Connect GROUND to common ground
-
-   History
-   =======
-   2020/JUN/01  - First release (Melissa LeBlanc-Williams)
-*/
 Adafruit_EEPROM_I2C i2ceeprom;
 //Adafruit_FRAM_I2C i2ceeprom;
 
-#define EEPROM_ADDR 0x50  // the default address!
+#define EEPROM_ADDR 0x50  // the default address for the I2C FRAM eeprom
 
 #define SEALEVELPRESSURE_HPA (1013.25)
 
@@ -62,32 +25,11 @@ unsigned long delayTime;
 
 Adafruit_SH1107 display = Adafruit_SH1107(64, 128, &Wire);
 
-// OLED FeatherWing buttons map to different pins depending on board:
-#if defined(ESP8266)
-  #define BUTTON_A  0
-  #define BUTTON_B 16
-  #define BUTTON_C  2
-#elif defined(ESP32)
-  #define BUTTON_A 15
-  #define BUTTON_B 32
-  #define BUTTON_C 14
-#elif defined(ARDUINO_STM32_FEATHER)
-  #define BUTTON_A PA15
-  #define BUTTON_B PC7
-  #define BUTTON_C PC5
-#elif defined(TEENSYDUINO)
-  #define BUTTON_A  4
-  #define BUTTON_B  3
-  #define BUTTON_C  8
-#elif defined(ARDUINO_NRF52832_FEATHER)
-  #define BUTTON_A 31
-  #define BUTTON_B 30
-  #define BUTTON_C 27
-#else // 32u4, M0, M4, nrf52840 and 328p
-  #define BUTTON_A  4
-  #define BUTTON_B  3
-  #define BUTTON_C  2
-#endif
+
+//define the buttons on the LCD screen.  D2, D3, and D4
+#define BUTTON_A  4
+#define BUTTON_B  3
+#define BUTTON_C  2
 
 float compass_heading;
 
@@ -146,12 +88,10 @@ int64_t time_counter  = 60;
 */
 /**************************************************************************/
 void setup(void) {
-  time_base = Time.now();
+time_base = Time.now();
 Serial.print("time base value =");
 Serial.print(time_base);
 Serial.print("\n");
-
-
 
 //wind speed and direction setup
 LastValue = 1;
@@ -165,8 +105,6 @@ attachInterrupt(wind_pin, isr_rotation, FALLING);
 
 Serial.println("Davis Wind Speed Test");
 Serial.println("Rotations\tMPH");
-
-
 
 //variables for calibration read from memory
 int test = 55;
@@ -201,11 +139,11 @@ int test = 55;
   pinMode(BUTTON_C, INPUT_PULLUP);
 
   // text display tests
-  display.setTextSize(1);
+  display.setTextSize(2);
   display.setTextColor(SH110X_WHITE);
   display.setCursor(0,0);
-  display.print("Connecting to SSID\n'adafruit':");
-  display.print("connected!");
+  display.print("BigdaddyAddie weather station!\n");
+  display.print("connected!\n");
   display.println("IP: 10.0.1.23");
   display.println("Sending val #0");
   display.display(); // actually display all of the above

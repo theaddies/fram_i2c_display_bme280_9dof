@@ -7,37 +7,37 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, ALLOC, LOAD, READONLY, DATA
   1 .dynalib      00000004  000d4018  000d4018  00004018  2**2
                   CONTENTS, ALLOC, LOAD, READONLY, DATA
-  2 .text         0000abc0  000d4020  000d4020  00004020  2**3
+  2 .text         0000abd0  000d4020  000d4020  00004020  2**3
                   CONTENTS, ALLOC, LOAD, READONLY, CODE
-  3 .ARM.exidx    00000008  000debe0  000debe0  0000ebe0  2**2
+  3 .ARM.exidx    00000008  000debf0  000debf0  0000ebf0  2**2
                   CONTENTS, ALLOC, LOAD, READONLY, DATA
-  4 .backup       00000004  2003f400  000debe8  0000f400  2**2
+  4 .backup       00000004  2003f400  000debf8  0000f400  2**2
                   CONTENTS, ALLOC, LOAD, DATA
-  5 .data         00000078  2003e3cc  000debec  0001e3cc  2**2
+  5 .data         00000078  2003e3cc  000debfc  0001e3cc  2**2
                   CONTENTS, ALLOC, LOAD, DATA
   6 .bss          000003ac  2003e448  2003e448  0002e448  2**3
                   ALLOC
-  7 .module_info_suffix 00000028  000dec64  000dec64  0001ec64  2**0
+  7 .module_info_suffix 00000028  000dec74  000dec74  0001ec74  2**0
                   CONTENTS, ALLOC, LOAD, READONLY, DATA
-  8 .module_info_crc 00000004  000dec8c  000dec8c  0001ec8c  2**0
+  8 .module_info_crc 00000004  000dec9c  000dec9c  0001ec9c  2**0
                   CONTENTS, ALLOC, LOAD, READONLY, DATA
-  9 .debug_info   0020c3b5  00000000  00000000  0001ec90  2**0
+  9 .debug_info   0020c3af  00000000  00000000  0001eca0  2**0
                   CONTENTS, READONLY, DEBUGGING
- 10 .debug_abbrev 0001fc29  00000000  00000000  0022b045  2**0
+ 10 .debug_abbrev 0001fc14  00000000  00000000  0022b04f  2**0
                   CONTENTS, READONLY, DEBUGGING
- 11 .debug_loc    00039581  00000000  00000000  0024ac6e  2**0
+ 11 .debug_loc    00039581  00000000  00000000  0024ac63  2**0
                   CONTENTS, READONLY, DEBUGGING
- 12 .debug_aranges 00002f30  00000000  00000000  002841ef  2**0
+ 12 .debug_aranges 00002f30  00000000  00000000  002841e4  2**0
                   CONTENTS, READONLY, DEBUGGING
- 13 .debug_ranges 00008720  00000000  00000000  0028711f  2**0
+ 13 .debug_ranges 00008720  00000000  00000000  00287114  2**0
                   CONTENTS, READONLY, DEBUGGING
- 14 .debug_macro  00045440  00000000  00000000  0028f83f  2**0
+ 14 .debug_macro  00045440  00000000  00000000  0028f834  2**0
                   CONTENTS, READONLY, DEBUGGING
- 15 .debug_line   00052fb5  00000000  00000000  002d4c7f  2**0
+ 15 .debug_line   00052fa8  00000000  00000000  002d4c74  2**0
                   CONTENTS, READONLY, DEBUGGING
- 16 .debug_str    0011390c  00000000  00000000  00327c34  2**0
+ 16 .debug_str    0011390c  00000000  00000000  00327c1c  2**0
                   CONTENTS, READONLY, DEBUGGING
- 17 .debug_frame  00009010  00000000  00000000  0043b540  2**2
+ 17 .debug_frame  00009010  00000000  00000000  0043b528  2**2
                   CONTENTS, READONLY, DEBUGGING
 
 Disassembly of section .text:
@@ -77,7 +77,7 @@ void* module_user_pre_init() {
    d4044:	bd08      	pop	{r3, pc}
    d4046:	bf00      	nop
    d4048:	2003e3cc 	.word	0x2003e3cc
-   d404c:	000debec 	.word	0x000debec
+   d404c:	000debfc 	.word	0x000debfc
    d4050:	2003e444 	.word	0x2003e444
    d4054:	2003e448 	.word	0x2003e448
    d4058:	2003e7f1 	.word	0x2003e7f1
@@ -116,8 +116,8 @@ void module_user_init()
     for (ctor_num=0; ctor_num < link_constructors_size/sizeof(constructor_ptr_t); ctor_num++ )
    d4078:	3501      	adds	r5, #1
    d407a:	e7f7      	b.n	d406c <module_user_init+0x10>
-   d407c:	000debb8 	.word	0x000debb8
-   d4080:	000debdc 	.word	0x000debdc
+   d407c:	000debc0 	.word	0x000debc0
+   d4080:	000debe4 	.word	0x000debe4
 
 000d4084 <module_user_setup>:
 
@@ -2152,7 +2152,7 @@ inline void yield() {
    d52d4:	2003e4d0 	.word	0x2003e4d0
    d52d8:	000dd785 	.word	0x000dd785
    d52dc:	2003e4d4 	.word	0x2003e4d4
-   d52e0:	000ddcb2 	.word	0x000ddcb2
+   d52e0:	000ddcb4 	.word	0x000ddcb4
    d52e4:	000dd787 	.word	0x000dd787
    d52e8:	43b40000 	.word	0x43b40000
    d52ec:	000dd789 	.word	0x000dd789
@@ -2364,7 +2364,7 @@ inline particle::Flags<TagT, ValueT>::Flags(ValueT val) :
 void setup(void) {
    d54d4:	e92d 47f0 	stmdb	sp!, {r4, r5, r6, r7, r8, r9, sl, lr}
    d54d8:	b0a2      	sub	sp, #136	; 0x88
-  time_base = Time.now();
+time_base = Time.now();
    d54da:	f003 fb81 	bl	d8be0 <_ZN9TimeClass3nowEv>
    d54de:	4db3      	ldr	r5, [pc, #716]	; (d57ac <setup+0x2d8>)
    d54e0:	17c1      	asrs	r1, r0, #31
@@ -2485,8 +2485,8 @@ Serial.println("Rotations\tMPH");
    d55dc:	2102      	movs	r1, #2
    d55de:	4608      	mov	r0, r1
    d55e0:	f004 f9ee 	bl	d99c0 <pinMode>
-  display.setTextSize(1);
-   d55e4:	2101      	movs	r1, #1
+  display.setTextSize(2);
+   d55e4:	2102      	movs	r1, #2
    d55e6:	4620      	mov	r0, r4
    d55e8:	f002 fa15 	bl	d7a16 <_ZN12Adafruit_GFX11setTextSizeEh>
     @param   c   16-bit 5-6-5 Color to draw text with
@@ -2498,11 +2498,11 @@ Serial.println("Rotations\tMPH");
    d55ec:	2200      	movs	r2, #0
    d55ee:	f04f 1301 	mov.w	r3, #65537	; 0x10001
    d55f2:	e9c4 2304 	strd	r2, r3, [r4, #16]
-  display.print("Connecting to SSID\n'adafruit':");
+  display.print("BigdaddyAddie weather station!\n");
    d55f6:	497d      	ldr	r1, [pc, #500]	; (d57ec <setup+0x318>)
    d55f8:	4620      	mov	r0, r4
    d55fa:	f003 f927 	bl	d884c <_ZN5Print5printEPKc>
-  display.print("connected!");
+  display.print("connected!\n");
    d55fe:	497c      	ldr	r1, [pc, #496]	; (d57f0 <setup+0x31c>)
    d5600:	4620      	mov	r0, r4
    d5602:	f003 f923 	bl	d884c <_ZN5Print5printEPKc>
@@ -2718,29 +2718,29 @@ if (i2ceeprom.begin(0x50)) {  // you can stick the new i2c addr in here, e.g. be
    d57e4:	000dd887 	.word	0x000dd887
    d57e8:	000dd892 	.word	0x000dd892
    d57ec:	000dd89e 	.word	0x000dd89e
-   d57f0:	000dd8bd 	.word	0x000dd8bd
-   d57f4:	000dd8c8 	.word	0x000dd8c8
-   d57f8:	000dd8d6 	.word	0x000dd8d6
+   d57f0:	000dd8be 	.word	0x000dd8be
+   d57f4:	000dd8ca 	.word	0x000dd8ca
+   d57f8:	000dd8d8 	.word	0x000dd8d8
    d57fc:	2003e470 	.word	0x2003e470
-   d5800:	000dd8e5 	.word	0x000dd8e5
-   d5804:	000dd92d 	.word	0x000dd92d
-   d5808:	000dd93e 	.word	0x000dd93e
-   d580c:	000dd985 	.word	0x000dd985
-   d5810:	000dd9af 	.word	0x000dd9af
-   d5814:	000dd9d9 	.word	0x000dd9d9
-   d5818:	000dda03 	.word	0x000dda03
+   d5800:	000dd8e7 	.word	0x000dd8e7
+   d5804:	000dd92f 	.word	0x000dd92f
+   d5808:	000dd940 	.word	0x000dd940
+   d580c:	000dd987 	.word	0x000dd987
+   d5810:	000dd9b1 	.word	0x000dd9b1
+   d5814:	000dd9db 	.word	0x000dd9db
+   d5818:	000dda05 	.word	0x000dda05
    d581c:	000dd77f 	.word	0x000dd77f
    d5820:	2003e530 	.word	0x2003e530
-   d5824:	000dda19 	.word	0x000dda19
-   d5828:	000dda2a 	.word	0x000dda2a
-   d582c:	000ddaa9 	.word	0x000ddaa9
-   d5830:	000ddabb 	.word	0x000ddabb
-   d5834:	000ddad2 	.word	0x000ddad2
+   d5824:	000dda1b 	.word	0x000dda1b
+   d5828:	000dda2c 	.word	0x000dda2c
+   d582c:	000ddaab 	.word	0x000ddaab
+   d5830:	000ddabd 	.word	0x000ddabd
+   d5834:	000ddad4 	.word	0x000ddad4
    d5838:	2003e4b4 	.word	0x2003e4b4
-   d583c:	000ddad9 	.word	0x000ddad9
-   d5840:	000dda38 	.word	0x000dda38
-   d5844:	000dda8b 	.word	0x000dda8b
-   d5848:	000dda70 	.word	0x000dda70
+   d583c:	000ddadb 	.word	0x000ddadb
+   d5840:	000dda3a 	.word	0x000dda3a
+   d5844:	000dda8d 	.word	0x000dda8d
+   d5848:	000dda72 	.word	0x000dda72
    Serial.print("time base value =");
    d584c:	f003 fe20 	bl	d9490 <_Z16_fetch_usbserialv>
    d5850:	497d      	ldr	r1, [pc, #500]	; (d5a48 <setup+0x574>)
@@ -2990,23 +2990,23 @@ millisOld=millis();
    d5a48:	000dd7f8 	.word	0x000dd7f8
    d5a4c:	000dd7b6 	.word	0x000dd7b6
    d5a50:	2003e4b4 	.word	0x2003e4b4
-   d5a54:	000ddb16 	.word	0x000ddb16
+   d5a54:	000ddb18 	.word	0x000ddb18
    d5a58:	2003e538 	.word	0x2003e538
-   d5a5c:	000ddbce 	.word	0x000ddbce
-   d5a60:	000ddb4c 	.word	0x000ddb4c
-   d5a64:	000ddb7a 	.word	0x000ddb7a
-   d5a68:	000ddba8 	.word	0x000ddba8
-   d5a6c:	000ddbfe 	.word	0x000ddbfe
+   d5a5c:	000ddbd0 	.word	0x000ddbd0
+   d5a60:	000ddb4e 	.word	0x000ddb4e
+   d5a64:	000ddb7c 	.word	0x000ddb7c
+   d5a68:	000ddbaa 	.word	0x000ddbaa
+   d5a6c:	000ddc00 	.word	0x000ddc00
    d5a70:	000dd7b8 	.word	0x000dd7b8
    d5a74:	000dd7bc 	.word	0x000dd7bc
    d5a78:	000dd7c1 	.word	0x000dd7c1
    d5a7c:	000dd77f 	.word	0x000dd77f
-   d5a80:	000ddc18 	.word	0x000ddc18
+   d5a80:	000ddc1a 	.word	0x000ddc1a
    d5a84:	000dd614 	.word	0x000dd614
-   d5a88:	000ddc2b 	.word	0x000ddc2b
-   d5a8c:	000ddc41 	.word	0x000ddc41
-   d5a90:	000ddc69 	.word	0x000ddc69
-   d5a94:	000ddc80 	.word	0x000ddc80
+   d5a88:	000ddc2d 	.word	0x000ddc2d
+   d5a8c:	000ddc43 	.word	0x000ddc43
+   d5a90:	000ddc6b 	.word	0x000ddc6b
+   d5a94:	000ddc82 	.word	0x000ddc82
 
 000d5a98 <_ZN8particle11SPISettingsD1Ev>:
   SPISettings()
@@ -3092,12 +3092,12 @@ millisOld=millis();
       return p.printf("<SPISettings %s%u %s MODE%u>", default_ ? "default " : "", (unsigned int)clock_,
    d5afc:	4a05      	ldr	r2, [pc, #20]	; (d5b14 <_ZNK8particle11SPISettings7printToER5Print+0x50>)
    d5afe:	e7ef      	b.n	d5ae0 <_ZNK8particle11SPISettings7printToER5Print+0x1c>
-   d5b00:	000ddcb4 	.word	0x000ddcb4
+   d5b00:	000ddcb6 	.word	0x000ddcb6
    d5b04:	000dd77f 	.word	0x000dd77f
-   d5b08:	000ddcb0 	.word	0x000ddcb0
-   d5b0c:	000ddcac 	.word	0x000ddcac
-   d5b10:	000ddcca 	.word	0x000ddcca
-   d5b14:	000ddca3 	.word	0x000ddca3
+   d5b08:	000ddcb2 	.word	0x000ddcb2
+   d5b0c:	000ddcae 	.word	0x000ddcae
+   d5b10:	000ddccc 	.word	0x000ddccc
+   d5b14:	000ddca5 	.word	0x000ddca5
 
 000d5b18 <_ZN15Adafruit_BME280C1Ev>:
 /*! 
@@ -3353,7 +3353,7 @@ uint8_t Adafruit_BME280::spixfer(uint8_t x) {
     return value;
    d5cb4:	e7c3      	b.n	d5c3e <_ZN15Adafruit_BME2806read24Eh+0x52>
    d5cb6:	bf00      	nop
-   d5cb8:	000ddcf0 	.word	0x000ddcf0
+   d5cb8:	000ddcf4 	.word	0x000ddcf4
    d5cbc:	0007a120 	.word	0x0007a120
 
 000d5cc0 <_ZN15Adafruit_BME28015readTemperatureEv>:
@@ -3721,7 +3721,7 @@ float Adafruit_BME280::readPressure(void) {
    d5ff4:	f7ff fde8 	bl	d5bc8 <_ZN8particle8SpiProxyIL19hal_spi_interface_t0EE14endTransactionEv.isra.0>
    d5ff8:	e7c7      	b.n	d5f8a <_ZN15Adafruit_BME2806read16Eh+0x4a>
    d5ffa:	bf00      	nop
-   d5ffc:	000ddcf0 	.word	0x000ddcf0
+   d5ffc:	000ddcf4 	.word	0x000ddcf4
    d6000:	0007a120 	.word	0x0007a120
 
 000d6004 <_ZN15Adafruit_BME2809read16_LEEh>:
@@ -3894,7 +3894,7 @@ uint8_t Adafruit_BME280::read8(byte reg) {
    d613c:	f7ff fd44 	bl	d5bc8 <_ZN8particle8SpiProxyIL19hal_spi_interface_t0EE14endTransactionEv.isra.0>
    d6140:	e7ce      	b.n	d60e0 <_ZN15Adafruit_BME2805read8Eh+0x3c>
    d6142:	bf00      	nop
-   d6144:	000ddcf0 	.word	0x000ddcf0
+   d6144:	000ddcf4 	.word	0x000ddcf4
    d6148:	0007a120 	.word	0x0007a120
 
 000d614c <_ZN15Adafruit_BME28020isReadingCalibrationEv>:
@@ -4115,7 +4115,7 @@ void Adafruit_BME280::write8(byte reg, byte value) {
    d62c6:	f7ff fc7f 	bl	d5bc8 <_ZN8particle8SpiProxyIL19hal_spi_interface_t0EE14endTransactionEv.isra.0>
 }
    d62ca:	e7d0      	b.n	d626e <_ZN15Adafruit_BME2806write8Ehh+0x32>
-   d62cc:	000ddcf0 	.word	0x000ddcf0
+   d62cc:	000ddcf4 	.word	0x000ddcf4
    d62d0:	0007a120 	.word	0x0007a120
 
 000d62d4 <_ZN15Adafruit_BME28011setSamplingENS_11sensor_modeENS_15sensor_samplingES1_S1_NS_13sensor_filterENS_16standby_durationE>:
@@ -5109,7 +5109,7 @@ void Adafruit_BNO055::getSensor(sensor_t *sensor) {
 }
    d6840:	bd10      	pop	{r4, pc}
    d6842:	bf00      	nop
-   d6844:	000ddbc7 	.word	0x000ddbc7
+   d6844:	000ddbc9 	.word	0x000ddbc9
    d6848:	3c23d70a 	.word	0x3c23d70a
 
 000d684c <_ZN15Adafruit_BNO055D0Ev>:
@@ -5151,7 +5151,7 @@ Adafruit_BNO055::Adafruit_BNO055(int32_t sensorID, uint8_t address,
 }
    d6884:	b002      	add	sp, #8
    d6886:	bd70      	pop	{r4, r5, r6, pc}
-   d6888:	000ddd04 	.word	0x000ddd04
+   d6888:	000ddd08 	.word	0x000ddd08
 
 000d688c <_ZN15Adafruit_BNO0556write8ENS_21adafruit_bno055_reg_tEh>:
 }
@@ -6268,7 +6268,7 @@ Adafruit_GrayOLED::Adafruit_GrayOLED(uint8_t bpp, uint16_t w, uint16_t h,
    d7062:	4620      	mov	r0, r4
    d7064:	bd38      	pop	{r3, r4, r5, pc}
    d7066:	bf00      	nop
-   d7068:	000ddd20 	.word	0x000ddd20
+   d7068:	000ddd24 	.word	0x000ddd24
 
 000d706c <_ZN17Adafruit_GrayOLEDD1Ev>:
 Adafruit_GrayOLED::~Adafruit_GrayOLED(void) {
@@ -6302,7 +6302,7 @@ Adafruit_GrayOLED::~Adafruit_GrayOLED(void) {
 }
    d709c:	4620      	mov	r0, r4
    d709e:	bd38      	pop	{r3, r4, r5, pc}
-   d70a0:	000ddd20 	.word	0x000ddd20
+   d70a0:	000ddd24 	.word	0x000ddd24
 
 000d70a4 <_ZN17Adafruit_GrayOLED12oled_commandEh>:
 void Adafruit_GrayOLED::oled_command(uint8_t c) {
@@ -7169,7 +7169,7 @@ Adafruit_GFX::Adafruit_GFX(int16_t w, int16_t h) : WIDTH(w), HEIGHT(h) {
 }
    d7586:	bd30      	pop	{r4, r5, pc}
    d7588:	01000101 	.word	0x01000101
-   d758c:	000de27c 	.word	0x000de27c
+   d758c:	000de280 	.word	0x000de280
 
 000d7590 <_ZN12Adafruit_GFX10drawBitmapEssPKhsst>:
                               int16_t w, int16_t h, uint16_t color) {
@@ -7652,7 +7652,7 @@ Adafruit_GFX::Adafruit_GFX(int16_t w, int16_t h) : WIDTH(w), HEIGHT(h) {
    d7906:	b011      	add	sp, #68	; 0x44
    d7908:	ecbd 8b02 	vpop	{d8}
    d790c:	e8bd 8ff0 	ldmia.w	sp!, {r4, r5, r6, r7, r8, r9, sl, fp, pc}
-   d7910:	000ddd74 	.word	0x000ddd74
+   d7910:	000ddd78 	.word	0x000ddd78
 
 000d7914 <_ZN12Adafruit_GFX5writeEh>:
 size_t Adafruit_GFX::write(uint8_t c) {
@@ -8043,7 +8043,7 @@ Adafruit_SH110X::Adafruit_SH110X(uint16_t w, uint16_t h, TwoWire *twi,
    d7ba0:	f884 3054 	strb.w	r3, [r4, #84]	; 0x54
    d7ba4:	b005      	add	sp, #20
    d7ba6:	bd30      	pop	{r4, r5, pc}
-   d7ba8:	000de2d4 	.word	0x000de2d4
+   d7ba8:	000de2d8 	.word	0x000de2d8
 
 000d7bac <_ZN15Adafruit_SH110XD1Ev>:
 Adafruit_SH110X::~Adafruit_SH110X(void) {}
@@ -8054,7 +8054,7 @@ Adafruit_SH110X::~Adafruit_SH110X(void) {}
    d7bb4:	f7ff fa5a 	bl	d706c <_ZN17Adafruit_GrayOLEDD1Ev>
    d7bb8:	4620      	mov	r0, r4
    d7bba:	bd10      	pop	{r4, pc}
-   d7bbc:	000de2d4 	.word	0x000de2d4
+   d7bbc:	000de2d8 	.word	0x000de2d8
 
 000d7bc0 <_ZN15Adafruit_SH1107D1Ev>:
     : Adafruit_SH110X(w, h, spi, dc_pin, rst_pin, cs_pin, bitrate) {}
@@ -8070,7 +8070,7 @@ Adafruit_SH1107::~Adafruit_SH1107(void) {}
    d7bc8:	f7ff fff0 	bl	d7bac <_ZN15Adafruit_SH110XD1Ev>
    d7bcc:	4620      	mov	r0, r4
    d7bce:	bd10      	pop	{r4, pc}
-   d7bd0:	000de510 	.word	0x000de510
+   d7bd0:	000de514 	.word	0x000de514
 
 000d7bd4 <_ZN15Adafruit_SH1107D0Ev>:
    d7bd4:	b510      	push	{r4, lr}
@@ -8101,7 +8101,7 @@ Adafruit_SH1107::Adafruit_SH1107(uint16_t w, uint16_t h, TwoWire *twi,
    d7c06:	b005      	add	sp, #20
    d7c08:	bd30      	pop	{r4, r5, pc}
    d7c0a:	bf00      	nop
-   d7c0c:	000de510 	.word	0x000de510
+   d7c0c:	000de514 	.word	0x000de514
 
 000d7c10 <_ZN15Adafruit_SH11075beginEhb>:
     @return true on successful allocation/init, false otherwise.
@@ -8226,9 +8226,9 @@ bool Adafruit_SH1107::begin(uint8_t addr, bool reset) {
    d7ce0:	d1f0      	bne.n	d7cc4 <_ZN15Adafruit_SH11075beginEhb+0xb4>
    d7ce2:	e7e7      	b.n	d7cb4 <_ZN15Adafruit_SH11075beginEhb+0xa4>
    d7ce4:	00800040 	.word	0x00800040
-   d7ce8:	000de328 	.word	0x000de328
-   d7cec:	000de568 	.word	0x000de568
-   d7cf0:	000de564 	.word	0x000de564
+   d7ce8:	000de32c 	.word	0x000de32c
+   d7cec:	000de56c 	.word	0x000de56c
+   d7cf0:	000de568 	.word	0x000de568
 
 000d7cf4 <_ZN19Adafruit_EEPROM_I2CC1Ev>:
 /**************************************************************************/
@@ -9574,7 +9574,7 @@ EthernetClass Ethernet;
 } // spark
    d83de:	4770      	bx	lr
    d83e0:	2003e588 	.word	0x2003e588
-   d83e4:	000de588 	.word	0x000de588
+   d83e4:	000de58c 	.word	0x000de58c
 
 000d83e8 <_ZN8SPIClass4lockEv.isra.0>:
   }
@@ -9691,7 +9691,7 @@ void SPIClass::computeClockDivider(unsigned reference, unsigned targetSpeed, uin
 }
    d8454:	bd30      	pop	{r4, r5, pc}
    d8456:	bf00      	nop
-   d8458:	000de5bc 	.word	0x000de5bc
+   d8458:	000de5c0 	.word	0x000de5c0
 
 000d845c <_ZN8SPIClass16beginTransactionERKN8particle11SPISettingsE>:
 {
@@ -10874,14 +10874,14 @@ size_t Print::printFloat(double number, uint8_t digits)
    d8a96:	2300      	movs	r3, #0
    d8a98:	e7e8      	b.n	d8a6c <_ZN5Print10printFloatEdh+0x13c>
    d8a9a:	bf00      	nop
-   d8a9c:	000de5c4 	.word	0x000de5c4
+   d8a9c:	000de5c8 	.word	0x000de5c8
    d8aa0:	7fefffff 	.word	0x7fefffff
-   d8aa4:	000de5c8 	.word	0x000de5c8
+   d8aa4:	000de5cc 	.word	0x000de5cc
    d8aa8:	41efffff 	.word	0x41efffff
-   d8aac:	000de5cc 	.word	0x000de5cc
+   d8aac:	000de5d0 	.word	0x000de5d0
    d8ab0:	c1efffff 	.word	0xc1efffff
    d8ab4:	3fe00000 	.word	0x3fe00000
-   d8ab8:	000ddba6 	.word	0x000ddba6
+   d8ab8:	000ddba8 	.word	0x000ddba8
    d8abc:	40240000 	.word	0x40240000
 
 000d8ac0 <_ZN5Print5printEfi>:
@@ -11028,7 +11028,7 @@ void spark::logProcessControlRequest(ctrl_request* req) {
 }
    d8b82:	4770      	bx	lr
    d8b84:	2003e5a4 	.word	0x2003e5a4
-   d8b88:	000de5d0 	.word	0x000de5d0
+   d8b88:	000de5d4 	.word	0x000de5d4
 
 000d8b8c <_ZN10CloudClass12syncTimeDoneEv.isra.0>:
     bool syncTimePending(void)
@@ -11335,7 +11335,7 @@ void module_user_init_hook()
    d8ce2:	bf00      	nop
    d8ce4:	2003f400 	.word	0x2003f400
    d8ce8:	2003f404 	.word	0x2003f404
-   d8cec:	000debe8 	.word	0x000debe8
+   d8cec:	000debf8 	.word	0x000debf8
    d8cf0:	2003f400 	.word	0x2003f400
    d8cf4:	9a271c1e 	.word	0x9a271c1e
 
@@ -11723,7 +11723,7 @@ inline particle::Error::~Error() {
 	}
    d8ed4:	4620      	mov	r0, r4
    d8ed6:	bd38      	pop	{r3, r4, r5, pc}
-   d8ed8:	000de5f8 	.word	0x000de5f8
+   d8ed8:	000de5fc 	.word	0x000de5fc
 
 000d8edc <_ZNSt8functionIFvRKN8particle5ErrorEEEC1ERKS5_>:
     function<_Res(_ArgTypes...)>::
@@ -12472,7 +12472,7 @@ IPAddress::IPAddress()
    d936a:	4620      	mov	r0, r4
    d936c:	bd10      	pop	{r4, pc}
    d936e:	bf00      	nop
-   d9370:	000de614 	.word	0x000de614
+   d9370:	000de618 	.word	0x000de618
 
 000d9374 <_ZN9IPAddressC1ERK16_HAL_IPAddress_t>:
 IPAddress::IPAddress(const HAL_IPAddress& address)
@@ -12490,7 +12490,7 @@ IPAddress::IPAddress(const HAL_IPAddress& address)
    d9390:	701a      	strb	r2, [r3, #0]
 }
    d9392:	bd10      	pop	{r4, pc}
-   d9394:	000de614 	.word	0x000de614
+   d9394:	000de618 	.word	0x000de618
 
 000d9398 <_ZN9IPAddress8set_ipv4Ehhhh>:
 {
@@ -12657,7 +12657,7 @@ USBSerial::USBSerial(HAL_USB_USART_Serial serial, const HAL_USB_USART_Config& co
 }
    d9464:	4620      	mov	r0, r4
    d9466:	bd10      	pop	{r4, pc}
-   d9468:	000de628 	.word	0x000de628
+   d9468:	000de62c 	.word	0x000de62c
 
 000d946c <_ZN9USBSerial5beginEl>:
     HAL_USB_USART_Begin(_serial, speed, NULL);
@@ -12902,7 +12902,7 @@ bool attachInterrupt(uint16_t pin, raw_interrupt_handler_t handler, InterruptMod
    d95be:	bd10      	pop	{r4, pc}
    d95c0:	2003e5e4 	.word	0x2003e5e4
    d95c4:	2003e5dc 	.word	0x2003e5dc
-   d95c8:	000de658 	.word	0x000de658
+   d95c8:	000de65c 	.word	0x000de65c
 
 000d95cc <_ZN11USARTSerialD1Ev>:
 private:
@@ -13037,7 +13037,7 @@ USARTSerial::USARTSerial(hal_usart_interface_t serial, hal_usart_ring_buffer_t *
 }
    d966c:	4620      	mov	r0, r4
    d966e:	bd10      	pop	{r4, pc}
-   d9670:	000de694 	.word	0x000de694
+   d9670:	000de698 	.word	0x000de698
 
 000d9674 <_Z22__fetch_global_Serial1v>:
 {
@@ -13227,7 +13227,7 @@ TwoWire::TwoWire(hal_i2c_interface_t i2c, const hal_i2c_config_t& conf)
 }
    d975c:	4620      	mov	r0, r4
    d975e:	bd10      	pop	{r4, pc}
-   d9760:	000de6c4 	.word	0x000de6c4
+   d9760:	000de6c8 	.word	0x000de6c8
 
 000d9764 <_ZN7TwoWire8setSpeedEm>:
   hal_i2c_set_speed(_i2c, clockSpeed, NULL);
@@ -13597,7 +13597,7 @@ class IPAddress : public Printable {
 } // spark
    d993a:	4770      	bx	lr
    d993c:	2003e72c 	.word	0x2003e72c
-   d9940:	000de6ec 	.word	0x000de6ec
+   d9940:	000de6f0 	.word	0x000de6f0
 
 000d9944 <pinAvailable>:
 /*
@@ -13896,7 +13896,7 @@ TwoWire& __fetch_global_Wire()
    d9abe:	4620      	mov	r0, r4
    d9ac0:	bd38      	pop	{r3, r4, r5, pc}
    d9ac2:	bf00      	nop
-   d9ac4:	000de720 	.word	0x000de720
+   d9ac4:	000de724 	.word	0x000de724
 
 000d9ac8 <_Z19__fetch_global_Wirev>:
 {
@@ -14300,7 +14300,7 @@ TwoWire& __fetch_global_Wire()
    d9f10:	00000000 	.word	0x00000000
    d9f14:	7ff00000 	.word	0x7ff00000
    d9f18:	2003e3d8 	.word	0x2003e3d8
-   d9f1c:	000de724 	.word	0x000de724
+   d9f1c:	000de728 	.word	0x000de728
    d9f20:	fff00000 	.word	0xfff00000
    d9f24:	3fe00000 	.word	0x3fe00000
    d9f28:	c7efffff 	.word	0xc7efffff
@@ -14346,7 +14346,7 @@ TwoWire& __fetch_global_Wire()
    d9fa4:	3fe00000 	.word	0x3fe00000
    d9fa8:	fff00000 	.word	0xfff00000
    d9fac:	2003e3d8 	.word	0x2003e3d8
-   d9fb0:	000de724 	.word	0x000de724
+   d9fb0:	000de728 	.word	0x000de728
 
 000d9fb4 <atan2f>:
    d9fb4:	f000 bf9e 	b.w	daef4 <__ieee754_atan2f>
@@ -14509,8 +14509,8 @@ TwoWire& __fetch_global_Wire()
    da1a0:	54442d18 	.word	0x54442d18
    da1a4:	3fe921fb 	.word	0x3fe921fb
    da1a8:	7ff00000 	.word	0x7ff00000
-   da1ac:	000de740 	.word	0x000de740
-   da1b0:	000de728 	.word	0x000de728
+   da1ac:	000de748 	.word	0x000de748
+   da1b0:	000de730 	.word	0x000de730
    da1b4:	00000000 	.word	0x00000000
 
 000da1b8 <__ieee754_pow>:
@@ -14688,7 +14688,7 @@ TwoWire& __fetch_global_Wire()
    da3b0:	7ff00000 	.word	0x7ff00000
    da3b4:	3ff00000 	.word	0x3ff00000
    da3b8:	3fe00000 	.word	0x3fe00000
-   da3bc:	000de758 	.word	0x000de758
+   da3bc:	000de760 	.word	0x000de760
    da3c0:	433fffff 	.word	0x433fffff
    da3c4:	41e00000 	.word	0x41e00000
    da3c8:	3fefffff 	.word	0x3fefffff
@@ -15791,8 +15791,8 @@ TwoWire& __fetch_global_Wire()
    db02c:	c0490fdb 	.word	0xc0490fdb
    db030:	3fc90fdb 	.word	0x3fc90fdb
    db034:	bfc90fdb 	.word	0xbfc90fdb
-   db038:	000de768 	.word	0x000de768
-   db03c:	000de75c 	.word	0x000de75c
+   db038:	000de770 	.word	0x000de770
+   db03c:	000de764 	.word	0x000de764
    db040:	3f490fdb 	.word	0x3f490fdb
 
 000db044 <__ieee754_rem_pio2f>:
@@ -15988,11 +15988,11 @@ TwoWire& __fetch_global_Wire()
    db2b0:	37354443 	.word	0x37354443
    db2b4:	43490f80 	.word	0x43490f80
    db2b8:	43800000 	.word	0x43800000
-   db2bc:	000de7f4 	.word	0x000de7f4
+   db2bc:	000de7fc 	.word	0x000de7fc
    db2c0:	37354400 	.word	0x37354400
    db2c4:	2e85a308 	.word	0x2e85a308
    db2c8:	3f22f984 	.word	0x3f22f984
-   db2cc:	000de774 	.word	0x000de774
+   db2cc:	000de77c 	.word	0x000de77c
    db2d0:	2e85a300 	.word	0x2e85a300
    db2d4:	248d3132 	.word	0x248d3132
 
@@ -16358,7 +16358,7 @@ TwoWire& __fetch_global_Wire()
    db73c:	2201      	movs	r2, #1
    db73e:	f04f 0c00 	mov.w	ip, #0
    db742:	e791      	b.n	db668 <__kernel_rem_pio2f+0x28c>
-   db744:	000deb38 	.word	0x000deb38
+   db744:	000deb40 	.word	0x000deb40
    db748:	00000000 	.word	0x00000000
    db74c:	43800000 	.word	0x43800000
    db750:	3b800000 	.word	0x3b800000
@@ -16622,7 +16622,7 @@ TwoWire& __fetch_global_Wire()
    dba3a:	d0a2      	beq.n	db982 <__kernel_rem_pio2f+0x5a6>
    dba3c:	e7d4      	b.n	db9e8 <__kernel_rem_pio2f+0x60c>
    dba3e:	bf00      	nop
-   dba40:	000deb10 	.word	0x000deb10
+   dba40:	000deb18 	.word	0x000deb18
    dba44:	00000000 	.word	0x00000000
 
 000dba48 <__kernel_sinf>:
@@ -16954,8 +16954,8 @@ TwoWire& __fetch_global_Wire()
    dbe18:	440fffff 	.word	0x440fffff
    dbe1c:	7ff00000 	.word	0x7ff00000
    dbe20:	3fdbffff 	.word	0x3fdbffff
-   dbe24:	000deb48 	.word	0x000deb48
-   dbe28:	000deb68 	.word	0x000deb68
+   dbe24:	000deb50 	.word	0x000deb50
+   dbe28:	000deb70 	.word	0x000deb70
    dbe2c:	3ff00000 	.word	0x3ff00000
    dbe30:	3ff2ffff 	.word	0x3ff2ffff
    dbe34:	40038000 	.word	0x40038000
@@ -17091,7 +17091,7 @@ TwoWire& __fetch_global_Wire()
    dbf96:	ec41 0b10 	vmov	d0, r0, r1
    dbf9a:	e7b9      	b.n	dbf10 <rint+0x90>
    dbf9c:	000fffff 	.word	0x000fffff
-   dbfa0:	000deb88 	.word	0x000deb88
+   dbfa0:	000deb90 	.word	0x000deb90
    dbfa4:	00000000 	.word	0x00000000
 
 000dbfa8 <scalbn>:
@@ -17317,8 +17317,8 @@ TwoWire& __fetch_global_Wire()
    dc25c:	bde38e38 	.word	0xbde38e38
    dc260:	3eaaaaab 	.word	0x3eaaaaab
    dc264:	be4ccccd 	.word	0xbe4ccccd
-   dc268:	000deba8 	.word	0x000deba8
-   dc26c:	000deb98 	.word	0x000deb98
+   dc268:	000debb0 	.word	0x000debb0
+   dc26c:	000deba0 	.word	0x000deba0
    dc270:	7149f2ca 	.word	0x7149f2ca
    dc274:	3f97ffff 	.word	0x3f97ffff
    dc278:	401bffff 	.word	0x401bffff
@@ -19111,409 +19111,409 @@ TwoWire& __fetch_global_Wire()
    dd860:	3245 3038 7420 7365 0074 3231 7838 3436     E280 test.128x64
    dd870:	4f20 454c 2044 6546 7461 6568 5772 6e69      OLED FeatherWin
    dd880:	2067 6574 7473 4f00 454c 2044 6562 7567     g test.OLED begu
-   dd890:	006e 7542 7474 6e6f 7420 7365 0074 6f43     n.Button test.Co
-   dd8a0:	6e6e 6365 6974 676e 7420 206f 5353 4449     nnecting to SSID
-   dd8b0:	270a 6461 6661 7572 7469 3a27 6300 6e6f     .'adafruit':.con
-   dd8c0:	656e 7463 6465 0021 5049 203a 3031 302e     nected!.IP: 10.0
-   dd8d0:	312e 322e 0033 6553 646e 6e69 2067 6176     .1.23.Sending va
-   dd8e0:	206c 3023 4300 756f 646c 6e20 746f 6620     l #0.Could not f
-   dd8f0:	6e69 2064 2061 6176 696c 2064 4d42 3245     ind a valid BME2
-   dd900:	3038 7320 6e65 6f73 2c72 6320 6568 6b63     80 sensor, check
-   dd910:	7720 7269 6e69 2c67 6120 6464 6572 7373      wiring, address
-   dd920:	202c 6573 736e 726f 4920 2144 5300 6e65     , sensor ID!.Sen
-   dd930:	6f73 4972 2044 6177 3a73 3020 0078 2020     sorID was: 0x.  
-   dd940:	2020 2020 2020 4449 6f20 2066 7830 4646           ID of 0xFF
-   dd950:	7020 6f72 6162 6c62 2079 656d 6e61 2073      probably means 
-   dd960:	2061 6162 2064 6461 7264 7365 2c73 6120     a bad address, a
-   dd970:	4220 504d 3120 3038 6f20 2072 4d42 2050      BMP 180 or BMP 
-   dd980:	3830 0a35 2000 2020 4449 6f20 2066 7830     085..   ID of 0x
-   dd990:	3635 302d 3578 2038 6572 7270 7365 6e65     56-0x58 represen
-   dd9a0:	7374 6120 4220 504d 3220 3038 0a2c 2000     ts a BMP 280,.. 
-   dd9b0:	2020 2020 2020 4920 2044 666f 3020 3678            ID of 0x6
-   dd9c0:	2030 6572 7270 7365 6e65 7374 6120 4220     0 represents a B
-   dd9d0:	454d 3220 3038 0a2e 2000 2020 2020 2020     ME 280...       
-   dd9e0:	4920 2044 666f 3020 3678 2031 6572 7270      ID of 0x61 repr
-   dd9f0:	7365 6e65 7374 6120 4220 454d 3620 3038     esents a BME 680
-   dda00:	0a2e 5700 6265 6553 6972 6c61 3320 2044     ...WebSerial 3D 
-   dda10:	6946 6d72 6177 6572 4600 756f 646e 4920     Firmware.Found I
-   dda20:	4332 4520 5045 4f52 004d 6554 7473 6e69     2C EEPROM.Testin
-   dda30:	2067 6973 657a 0021 3249 2043 4545 5250     g size!.I2C EEPR
-   dda40:	4d4f 6e20 746f 6920 6564 746e 6669 6569     OM not identifie
-   dda50:	2064 2e2e 202e 6863 6365 206b 6f79 7275     d ... check your
-   dda60:	6320 6e6f 656e 7463 6f69 736e 0d3f 000a      connections?...
-   dda70:	6146 6c69 6465 7420 206f 7277 7469 2065     Failed to write 
-   dda80:	6461 7264 7365 2073 7830 4600 6961 656c     address 0x.Faile
-   dda90:	2064 6f74 7220 2d65 7277 7469 2065 6461     d to re-write ad
-   ddaa0:	7264 7365 2073 7830 4600 756f 646e 6d20     dress 0x.Found m
-   ddab0:	7861 6120 6464 6572 7373 5400 6968 2073     ax address.This 
-   ddac0:	4545 5250 4d4f 6320 6e61 7320 6f74 6572     EEPROM can store
-   ddad0:	0020 6220 7479 7365 4f00 6f6f 7370 202c      . bytes.Ooops, 
-   ddae0:	6f6e 4220 4f4e 3530 2035 6564 6574 7463     no BNO055 detect
-   ddaf0:	6465 2e20 2e2e 4320 6568 6b63 7920 756f     ed ... Check you
-   ddb00:	2072 6977 6972 676e 6f20 2072 3249 2043     r wiring or I2C 
-   ddb10:	4441 5244 0021 4e0a 206f 6143 696c 7262     ADDR!..No Calibr
-   ddb20:	7461 6f69 206e 6144 6174 6620 726f 7420     ation Data for t
-   ddb30:	6968 2073 6573 736e 726f 6520 6978 7473     his sensor exist
-   ddb40:	2073 6e69 4520 5045 4f52 004d 460a 756f     s in EEPROM..Fou
-   ddb50:	646e 4320 6c61 6269 6172 6974 6e6f 6620     nd Calibration f
-   ddb60:	726f 7420 6968 2073 6573 736e 726f 6920     or this sensor i
-   ddb70:	206e 4545 5250 4d4f 002e 0a0a 6552 7473     n EEPROM....Rest
-   ddb80:	726f 6e69 2067 6143 696c 7262 7461 6f69     oring Calibratio
-   ddb90:	206e 6164 6174 7420 206f 6874 2065 4e42     n data to the BN
-   ddba0:	304f 3535 2e2e 002e 0a0a 6143 696c 7262     O055......Calibr
-   ddbb0:	7461 6f69 206e 6164 6174 6c20 616f 6564     ation data loade
-   ddbc0:	2064 6e69 6f74 4220 4f4e 3530 0035 6f4d     d into BNO055.Mo
-   ddbd0:	6576 7320 6e65 6f73 2072 6c73 6769 7468     ve sensor slight
-   ddbe0:	796c 7420 206f 6163 696c 7262 7461 2065     ly to calibrate 
-   ddbf0:	616d 6e67 7465 6d6f 7465 7265 0073 6c50     magnetometers.Pl
-   ddc00:	6165 6573 4320 6c61 6269 6172 6574 5320     ease Calibrate S
-   ddc10:	6e65 6f73 3a72 0020 460a 6c75 796c 6320     ensor: ..Fully c
-   ddc20:	6c61 6269 6172 6574 2164 4300 6c61 6269     alibrated!.Calib
-   ddc30:	6172 6974 6e6f 5220 7365 6c75 7374 203a     ration Results: 
-   ddc40:	0a00 530a 6f74 6972 676e 6320 6c61 6269     ...Storing calib
-   ddc50:	6172 6974 6e6f 6420 7461 2061 6f74 4520     ration data to E
-   ddc60:	5045 4f52 2e4d 2e2e 4400 7461 2061 7473     EPROM....Data st
-   ddc70:	726f 6465 7420 206f 4545 5250 4d4f 002e     ored to EEPROM..
-   ddc80:	2d0a 2d2d 2d2d 2d2d 2d2d 2d2d 2d2d 2d2d     .---------------
+   dd890:	006e 7542 7474 6e6f 7420 7365 0074 6942     n.Button test.Bi
+   dd8a0:	6467 6461 7964 6441 6964 2065 6577 7461     gdaddyAddie weat
+   dd8b0:	6568 2072 7473 7461 6f69 216e 000a 6f63     her station!..co
+   dd8c0:	6e6e 6365 6574 2164 000a 5049 203a 3031     nnected!..IP: 10
+   dd8d0:	302e 312e 322e 0033 6553 646e 6e69 2067     .0.1.23.Sending 
+   dd8e0:	6176 206c 3023 4300 756f 646c 6e20 746f     val #0.Could not
+   dd8f0:	6620 6e69 2064 2061 6176 696c 2064 4d42      find a valid BM
+   dd900:	3245 3038 7320 6e65 6f73 2c72 6320 6568     E280 sensor, che
+   dd910:	6b63 7720 7269 6e69 2c67 6120 6464 6572     ck wiring, addre
+   dd920:	7373 202c 6573 736e 726f 4920 2144 5300     ss, sensor ID!.S
+   dd930:	6e65 6f73 4972 2044 6177 3a73 3020 0078     ensorID was: 0x.
+   dd940:	2020 2020 2020 2020 4449 6f20 2066 7830             ID of 0x
+   dd950:	4646 7020 6f72 6162 6c62 2079 656d 6e61     FF probably mean
+   dd960:	2073 2061 6162 2064 6461 7264 7365 2c73     s a bad address,
+   dd970:	6120 4220 504d 3120 3038 6f20 2072 4d42      a BMP 180 or BM
+   dd980:	2050 3830 0a35 2000 2020 4449 6f20 2066     P 085..   ID of 
+   dd990:	7830 3635 302d 3578 2038 6572 7270 7365     0x56-0x58 repres
+   dd9a0:	6e65 7374 6120 4220 504d 3220 3038 0a2c     ents a BMP 280,.
+   dd9b0:	2000 2020 2020 2020 4920 2044 666f 3020     .        ID of 0
+   dd9c0:	3678 2030 6572 7270 7365 6e65 7374 6120     x60 represents a
+   dd9d0:	4220 454d 3220 3038 0a2e 2000 2020 2020      BME 280...     
+   dd9e0:	2020 4920 2044 666f 3020 3678 2031 6572        ID of 0x61 re
+   dd9f0:	7270 7365 6e65 7374 6120 4220 454d 3620     presents a BME 6
+   dda00:	3038 0a2e 5700 6265 6553 6972 6c61 3320     80...WebSerial 3
+   dda10:	2044 6946 6d72 6177 6572 4600 756f 646e     D Firmware.Found
+   dda20:	4920 4332 4520 5045 4f52 004d 6554 7473      I2C EEPROM.Test
+   dda30:	6e69 2067 6973 657a 0021 3249 2043 4545     ing size!.I2C EE
+   dda40:	5250 4d4f 6e20 746f 6920 6564 746e 6669     PROM not identif
+   dda50:	6569 2064 2e2e 202e 6863 6365 206b 6f79     ied ... check yo
+   dda60:	7275 6320 6e6f 656e 7463 6f69 736e 0d3f     ur connections?.
+   dda70:	000a 6146 6c69 6465 7420 206f 7277 7469     ..Failed to writ
+   dda80:	2065 6461 7264 7365 2073 7830 4600 6961     e address 0x.Fai
+   dda90:	656c 2064 6f74 7220 2d65 7277 7469 2065     led to re-write 
+   ddaa0:	6461 7264 7365 2073 7830 4600 756f 646e     address 0x.Found
+   ddab0:	6d20 7861 6120 6464 6572 7373 5400 6968      max address.Thi
+   ddac0:	2073 4545 5250 4d4f 6320 6e61 7320 6f74     s EEPROM can sto
+   ddad0:	6572 0020 6220 7479 7365 4f00 6f6f 7370     re . bytes.Ooops
+   ddae0:	202c 6f6e 4220 4f4e 3530 2035 6564 6574     , no BNO055 dete
+   ddaf0:	7463 6465 2e20 2e2e 4320 6568 6b63 7920     cted ... Check y
+   ddb00:	756f 2072 6977 6972 676e 6f20 2072 3249     our wiring or I2
+   ddb10:	2043 4441 5244 0021 4e0a 206f 6143 696c     C ADDR!..No Cali
+   ddb20:	7262 7461 6f69 206e 6144 6174 6620 726f     bration Data for
+   ddb30:	7420 6968 2073 6573 736e 726f 6520 6978      this sensor exi
+   ddb40:	7473 2073 6e69 4520 5045 4f52 004d 460a     sts in EEPROM..F
+   ddb50:	756f 646e 4320 6c61 6269 6172 6974 6e6f     ound Calibration
+   ddb60:	6620 726f 7420 6968 2073 6573 736e 726f      for this sensor
+   ddb70:	6920 206e 4545 5250 4d4f 002e 0a0a 6552      in EEPROM....Re
+   ddb80:	7473 726f 6e69 2067 6143 696c 7262 7461     storing Calibrat
+   ddb90:	6f69 206e 6164 6174 7420 206f 6874 2065     ion data to the 
+   ddba0:	4e42 304f 3535 2e2e 002e 0a0a 6143 696c     BNO055......Cali
+   ddbb0:	7262 7461 6f69 206e 6164 6174 6c20 616f     bration data loa
+   ddbc0:	6564 2064 6e69 6f74 4220 4f4e 3530 0035     ded into BNO055.
+   ddbd0:	6f4d 6576 7320 6e65 6f73 2072 6c73 6769     Move sensor slig
+   ddbe0:	7468 796c 7420 206f 6163 696c 7262 7461     htly to calibrat
+   ddbf0:	2065 616d 6e67 7465 6d6f 7465 7265 0073     e magnetometers.
+   ddc00:	6c50 6165 6573 4320 6c61 6269 6172 6574     Please Calibrate
+   ddc10:	5320 6e65 6f73 3a72 0020 460a 6c75 796c      Sensor: ..Fully
+   ddc20:	6320 6c61 6269 6172 6574 2164 4300 6c61      calibrated!.Cal
+   ddc30:	6269 6172 6974 6e6f 5220 7365 6c75 7374     ibration Results
+   ddc40:	203a 0a00 530a 6f74 6972 676e 6320 6c61     : ...Storing cal
+   ddc50:	6269 6172 6974 6e6f 6420 7461 2061 6f74     ibration data to
+   ddc60:	4520 5045 4f52 2e4d 2e2e 4400 7461 2061      EEPROM....Data 
+   ddc70:	7473 726f 6465 7420 206f 4545 5250 4d4f     stored to EEPROM
+   ddc80:	002e 2d0a 2d2d 2d2d 2d2d 2d2d 2d2d 2d2d     ...-------------
    ddc90:	2d2d 2d2d 2d2d 2d2d 2d2d 2d2d 2d2d 2d2d     ----------------
-   ddca0:	0a2d 6400 6665 7561 746c 0020 534d 0042     -..default .MSB.
-   ddcb0:	534c 0042 533c 4950 6553 7474 6e69 7367     LSB.<SPISettings
-   ddcc0:	6420 6665 7561 746c 003e 533c 4950 6553      default>.<SPISe
-   ddcd0:	7474 6e69 7367 2520 2573 2075 7325 4d20     ttings %s%u %s M
-   ddce0:	444f 2545 3e75 0000                         ODE%u>..
+   ddca0:	2d2d 0a2d 6400 6665 7561 746c 0020 534d     ---..default .MS
+   ddcb0:	0042 534c 0042 533c 4950 6553 7474 6e69     B.LSB.<SPISettin
+   ddcc0:	7367 6420 6665 7561 746c 003e 533c 4950     gs default>.<SPI
+   ddcd0:	6553 7474 6e69 7367 2520 2573 2075 7325     Settings %s%u %s
+   ddce0:	4d20 444f 2545 3e75 0000 0000                MODE%u>....
 
-000ddce8 <_ZTVN8particle11SPISettingsE>:
+000ddcec <_ZTVN8particle11SPISettingsE>:
 	...
-   ddcf0:	5ac5 000d 5a99 000d 5a9b 000d               .Z...Z...Z..
+   ddcf4:	5ac5 000d 5a99 000d 5a9b 000d               .Z...Z...Z..
 
-000ddcfc <_ZTV15Adafruit_BNO055>:
+000ddd00 <_ZTV15Adafruit_BNO055>:
 	...
-   ddd04:	6809 000d 684d 000d 6807 000d 6ea1 000d     .h..Mh...h...n..
-   ddd14:	680d 000d                                   .h..
+   ddd08:	6809 000d 684d 000d 6807 000d 6ea1 000d     .h..Mh...h...n..
+   ddd18:	680d 000d                                   .h..
 
-000ddd18 <_ZTV17Adafruit_GrayOLED>:
+000ddd1c <_ZTV17Adafruit_GrayOLED>:
 	...
-   ddd28:	7915 000d 87fd 000d 6ef3 000d 731d 000d     .y.......n...s..
-   ddd38:	731f 000d 7351 000d 732d 000d 733f 000d     .s..Qs..-s..?s..
-   ddd48:	7261 000d 731d 000d 7549 000d 70ef 000d     ar...s..Iu...p..
-   ddd58:	7369 000d 73a7 000d 73e1 000d 7427 000d     is...s...s..'t..
-   ddd68:	74c5 000d 7443 000d 40a5 000d               .t..Ct...@..
+   ddd2c:	7915 000d 87fd 000d 6ef3 000d 731d 000d     .y.......n...s..
+   ddd3c:	731f 000d 7351 000d 732d 000d 733f 000d     .s..Qs..-s..?s..
+   ddd4c:	7261 000d 731d 000d 7549 000d 70ef 000d     ar...s..Iu...p..
+   ddd5c:	7369 000d 73a7 000d 73e1 000d 7427 000d     is...s...s..'t..
+   ddd6c:	74c5 000d 7443 000d 40a5 000d               .t..Ct...@..
 
-000ddd74 <_ZL4font>:
-   ddd74:	0000 0000 3e00 4f5b 3e5b 6b3e 6b4f 1c3e     .....>[O[>>kOk>.
-   ddd84:	7c3e 1c3e 3c18 3c7e 1c18 7d57 1c57 5e1c     >|>..<~<..W}W..^
-   ddd94:	5e7f 001c 3c18 0018 e7ff e7c3 00ff 2418     .^...<.........$
-   ddda4:	0018 e7ff e7db 30ff 3a48 0e06 2926 2979     .......0H:..&)y)
-   dddb4:	4026 057f 0705 7f40 2505 5a3f e73c 5a3c     &@....@..%?Z<.<Z
-   dddc4:	3e7f 1c1c 0808 1c1c 7f3e 2214 227f 5f14     .>......>.."."._
-   dddd4:	005f 5f5f 0906 017f 007f 8966 6a95 6060     _.__......f..j``
-   ddde4:	6060 9460 ffa2 94a2 0408 047e 1008 7e20     ```.......~... ~
-   dddf4:	1020 0808 1c2a 0808 2a1c 0808 101e 1010      ...*....*......
-   dde04:	0c10 0c1e 0c1e 3830 383e 0630 3e0e 060e     ......08>80..>..
-   dde14:	0000 0000 0000 5f00 0000 0700 0700 1400     ......._........
-   dde24:	147f 147f 2a24 2a7f 2312 0813 6264 4936     ....$*.*.#..db6I
-   dde34:	2056 0050 0708 0003 1c00 4122 0000 2241     V P......."A..A"
-   dde44:	001c 1c2a 1c7f 082a 3e08 0808 8000 3070     ..*...*..>....p0
-   dde54:	0800 0808 0808 0000 6060 2000 0810 0204     ........``. ....
-   dde64:	513e 4549 003e 7f42 0040 4972 4949 2146     >QIE>.B.@.rIIIF!
-   dde74:	4941 334d 1418 7f12 2710 4545 3945 4a3c     AIM3.....'EEE9<J
-   dde84:	4949 4131 1121 0709 4936 4949 4636 4949     II1A!...6III6FII
-   dde94:	1e29 0000 0014 0000 3440 0000 0800 2214     ).......@4....."
-   ddea4:	1441 1414 1414 4100 1422 0208 5901 0609     A......A"....Y..
-   ddeb4:	413e 595d 7c4e 1112 7c12 497f 4949 3e36     >A]YN|...|.III6>
-   ddec4:	4141 2241 417f 4141 7f3e 4949 4149 097f     AAA".AAA>.IIIA..
-   dded4:	0909 3e01 4141 7351 087f 0808 007f 7f41     ...>AAQs......A.
-   ddee4:	0041 4020 3f41 7f01 1408 4122 407f 4040     A. @A?...."A.@@@
-   ddef4:	7f40 1c02 7f02 047f 1008 3e7f 4141 3e41     @..........>AAA>
-   ddf04:	097f 0909 3e06 5141 5e21 097f 2919 2646     .....>AQ!^...)F&
-   ddf14:	4949 3249 0103 017f 3f03 4040 3f40 201f     III2.....?@@@?. 
-   ddf24:	2040 3f1f 3840 3f40 1463 1408 0363 7804     @ .?@8@?c...c..x
-   ddf34:	0304 5961 4d49 0043 417f 4141 0402 1008     ..aYIMC..AAA....
-   ddf44:	0020 4141 7f41 0204 0201 4004 4040 4040      .AAA......@@@@@
-   ddf54:	0300 0807 2000 5454 4078 287f 4444 3838     ..... TTx@.(DD88
-   ddf64:	4444 2844 4438 2844 387f 5454 1854 0800     DDD(8DD(.8TTT...
-   ddf74:	097e 1802 a4a4 789c 087f 0404 0078 7d44     ~......x....x.D}
-   ddf84:	0040 4020 3d40 7f00 2810 0044 4100 407f     @. @@=...(D..A.@
-   ddf94:	7c00 7804 7804 087c 0404 3878 4444 3844     .|.x.x|...x8DDD8
-   ddfa4:	18fc 2424 1818 2424 fc18 087c 0404 4808     ..$$..$$..|....H
-   ddfb4:	5454 2454 0404 443f 3c24 4040 7c20 201c     TTT$..?D$<@@ |. 
-   ddfc4:	2040 3c1c 3040 3c40 2844 2810 4c44 9090     @ .<@0@<D(.(DL..
-   ddfd4:	7c90 6444 4c54 0044 3608 0041 0000 0077     .|DdTLD..6A...w.
-   ddfe4:	0000 3641 0008 0102 0402 3c02 2326 3c26     ..A6.......<&#&<
-   ddff4:	a11e 61a1 3a12 4040 7a20 5438 5554 2159     ...a.:@@ z8TTUY!
-   de004:	5555 4179 5422 7854 2142 5455 4078 5420     UUyA"TTxB!UTx@ T
-   de014:	7955 0c40 521e 1272 5539 5555 3959 5454     Uy@..Rr.9UUUY9TT
-   de024:	5954 5539 5454 0058 4500 417c 0200 7d45     TY9UTTX..E|A..E}
-   de034:	0042 4501 407c 127d 1211 f07d 2528 f028     B..E|@}...}.(%(.
-   de044:	547c 4555 2000 5454 547c 0a7c 7f09 3249     |TUE. TT|T|...I2
-   de054:	4949 3249 443a 4444 323a 484a 3048 413a     III2:DDD:2JHH0:A
-   de064:	2141 3a7a 4042 7820 9d00 a0a0 3d7d 4242     A!z:B@ x....}=BB
-   de074:	3d42 403d 4040 3c3d ff24 2424 7e48 4349     B==@@@=<$.$$H~IC
-   de084:	2b66 fc2f 2b2f 09ff f629 c020 7e88 0309     f+/./+..). ..~..
-   de094:	5420 7954 0041 4400 417d 4830 4a48 3832      TTyA..D}A0HHJ28
-   de0a4:	4040 7a22 7a00 0a0a 7d72 190d 7d31 2926     @@"z.z..r}..1}&)
-   de0b4:	2f29 2628 2929 2629 4830 404d 3820 0808     )/(&)))&0HM@ 8..
-   de0c4:	0808 0808 0808 2f38 c810 baac 102f 3428     ......8/..../.(4
-   de0d4:	00fa 7b00 0000 1408 142a 2222 2a14 0814     ...{....*."".*..
-   de0e4:	0055 0055 aa55 aa55 aa55 55ff 55ff 00ff     U.U.U.U.U..U.U..
-   de0f4:	0000 00ff 1010 ff10 1400 1414 00ff 1010     ................
-   de104:	00ff 10ff f010 f010 1414 fc14 1400 f714     ................
-   de114:	ff00 0000 00ff 14ff f414 fc04 1414 1017     ................
-   de124:	101f 1f10 1f10 1414 1f14 1000 1010 00f0     ................
-   de134:	0000 1f00 1010 1010 101f 1010 f010 0010     ................
-   de144:	0000 10ff 1010 1010 1010 1010 10ff 0000     ................
-   de154:	ff00 0014 ff00 ff00 0000 101f 0017 fc00     ................
-   de164:	f404 1414 1017 1417 f414 f404 0000 00ff     ................
-   de174:	14f7 1414 1414 1414 00f7 14f7 1414 1417     ................
-   de184:	1010 101f 141f 1414 14f4 1010 10f0 00f0     ................
-   de194:	1f00 1f10 0000 1f00 0014 0000 14fc 0000     ................
-   de1a4:	10f0 10f0 ff10 ff10 1414 ff14 1014 1010     ................
-   de1b4:	001f 0000 f000 ff10 ffff ffff f0f0 f0f0     ................
-   de1c4:	fff0 ffff 0000 0000 ff00 0fff 0f0f 0f0f     ................
-   de1d4:	4438 3844 fc44 4a4a 344a 027e 0602 0206     8DD8D.JJJ4~.....
-   de1e4:	027e 027e 5563 4149 3863 4444 043c 7e40     ~.~.cUIAc8DD<.@~
-   de1f4:	1e20 0620 7e02 0202 a599 a5e7 1c99 492a      . ..~........*I
-   de204:	1c2a 724c 7201 304c 4d4a 304d 4830 4878     *.Lr.rL0JMM00HxH
-   de214:	bc30 5a62 3d46 493e 4949 7e00 0101 7e01     0.bZF=>III.~...~
-   de224:	2a2a 2a2a 442a 5f44 4444 5140 444a 4040     *****DD_DD@QJD@@
-   de234:	4a44 4051 0000 01ff e003 ff80 0000 0808     DJQ@............
-   de244:	6b6b 3608 3612 3624 0f06 0f09 0006 1800     kk.6.6$6........
-   de254:	0018 0000 1010 3000 ff40 0101 1f00 0101     .......0@.......
-   de264:	001e 1d19 1217 3c00 3c3c 003c 0000 0000     .......<<<<.....
+000ddd78 <_ZL4font>:
+   ddd78:	0000 0000 3e00 4f5b 3e5b 6b3e 6b4f 1c3e     .....>[O[>>kOk>.
+   ddd88:	7c3e 1c3e 3c18 3c7e 1c18 7d57 1c57 5e1c     >|>..<~<..W}W..^
+   ddd98:	5e7f 001c 3c18 0018 e7ff e7c3 00ff 2418     .^...<.........$
+   ddda8:	0018 e7ff e7db 30ff 3a48 0e06 2926 2979     .......0H:..&)y)
+   dddb8:	4026 057f 0705 7f40 2505 5a3f e73c 5a3c     &@....@..%?Z<.<Z
+   dddc8:	3e7f 1c1c 0808 1c1c 7f3e 2214 227f 5f14     .>......>.."."._
+   dddd8:	005f 5f5f 0906 017f 007f 8966 6a95 6060     _.__......f..j``
+   ddde8:	6060 9460 ffa2 94a2 0408 047e 1008 7e20     ```.......~... ~
+   dddf8:	1020 0808 1c2a 0808 2a1c 0808 101e 1010      ...*....*......
+   dde08:	0c10 0c1e 0c1e 3830 383e 0630 3e0e 060e     ......08>80..>..
+   dde18:	0000 0000 0000 5f00 0000 0700 0700 1400     ......._........
+   dde28:	147f 147f 2a24 2a7f 2312 0813 6264 4936     ....$*.*.#..db6I
+   dde38:	2056 0050 0708 0003 1c00 4122 0000 2241     V P......."A..A"
+   dde48:	001c 1c2a 1c7f 082a 3e08 0808 8000 3070     ..*...*..>....p0
+   dde58:	0800 0808 0808 0000 6060 2000 0810 0204     ........``. ....
+   dde68:	513e 4549 003e 7f42 0040 4972 4949 2146     >QIE>.B.@.rIIIF!
+   dde78:	4941 334d 1418 7f12 2710 4545 3945 4a3c     AIM3.....'EEE9<J
+   dde88:	4949 4131 1121 0709 4936 4949 4636 4949     II1A!...6III6FII
+   dde98:	1e29 0000 0014 0000 3440 0000 0800 2214     ).......@4....."
+   ddea8:	1441 1414 1414 4100 1422 0208 5901 0609     A......A"....Y..
+   ddeb8:	413e 595d 7c4e 1112 7c12 497f 4949 3e36     >A]YN|...|.III6>
+   ddec8:	4141 2241 417f 4141 7f3e 4949 4149 097f     AAA".AAA>.IIIA..
+   dded8:	0909 3e01 4141 7351 087f 0808 007f 7f41     ...>AAQs......A.
+   ddee8:	0041 4020 3f41 7f01 1408 4122 407f 4040     A. @A?...."A.@@@
+   ddef8:	7f40 1c02 7f02 047f 1008 3e7f 4141 3e41     @..........>AAA>
+   ddf08:	097f 0909 3e06 5141 5e21 097f 2919 2646     .....>AQ!^...)F&
+   ddf18:	4949 3249 0103 017f 3f03 4040 3f40 201f     III2.....?@@@?. 
+   ddf28:	2040 3f1f 3840 3f40 1463 1408 0363 7804     @ .?@8@?c...c..x
+   ddf38:	0304 5961 4d49 0043 417f 4141 0402 1008     ..aYIMC..AAA....
+   ddf48:	0020 4141 7f41 0204 0201 4004 4040 4040      .AAA......@@@@@
+   ddf58:	0300 0807 2000 5454 4078 287f 4444 3838     ..... TTx@.(DD88
+   ddf68:	4444 2844 4438 2844 387f 5454 1854 0800     DDD(8DD(.8TTT...
+   ddf78:	097e 1802 a4a4 789c 087f 0404 0078 7d44     ~......x....x.D}
+   ddf88:	0040 4020 3d40 7f00 2810 0044 4100 407f     @. @@=...(D..A.@
+   ddf98:	7c00 7804 7804 087c 0404 3878 4444 3844     .|.x.x|...x8DDD8
+   ddfa8:	18fc 2424 1818 2424 fc18 087c 0404 4808     ..$$..$$..|....H
+   ddfb8:	5454 2454 0404 443f 3c24 4040 7c20 201c     TTT$..?D$<@@ |. 
+   ddfc8:	2040 3c1c 3040 3c40 2844 2810 4c44 9090     @ .<@0@<D(.(DL..
+   ddfd8:	7c90 6444 4c54 0044 3608 0041 0000 0077     .|DdTLD..6A...w.
+   ddfe8:	0000 3641 0008 0102 0402 3c02 2326 3c26     ..A6.......<&#&<
+   ddff8:	a11e 61a1 3a12 4040 7a20 5438 5554 2159     ...a.:@@ z8TTUY!
+   de008:	5555 4179 5422 7854 2142 5455 4078 5420     UUyA"TTxB!UTx@ T
+   de018:	7955 0c40 521e 1272 5539 5555 3959 5454     Uy@..Rr.9UUUY9TT
+   de028:	5954 5539 5454 0058 4500 417c 0200 7d45     TY9UTTX..E|A..E}
+   de038:	0042 4501 407c 127d 1211 f07d 2528 f028     B..E|@}...}.(%(.
+   de048:	547c 4555 2000 5454 547c 0a7c 7f09 3249     |TUE. TT|T|...I2
+   de058:	4949 3249 443a 4444 323a 484a 3048 413a     III2:DDD:2JHH0:A
+   de068:	2141 3a7a 4042 7820 9d00 a0a0 3d7d 4242     A!z:B@ x....}=BB
+   de078:	3d42 403d 4040 3c3d ff24 2424 7e48 4349     B==@@@=<$.$$H~IC
+   de088:	2b66 fc2f 2b2f 09ff f629 c020 7e88 0309     f+/./+..). ..~..
+   de098:	5420 7954 0041 4400 417d 4830 4a48 3832      TTyA..D}A0HHJ28
+   de0a8:	4040 7a22 7a00 0a0a 7d72 190d 7d31 2926     @@"z.z..r}..1}&)
+   de0b8:	2f29 2628 2929 2629 4830 404d 3820 0808     )/(&)))&0HM@ 8..
+   de0c8:	0808 0808 0808 2f38 c810 baac 102f 3428     ......8/..../.(4
+   de0d8:	00fa 7b00 0000 1408 142a 2222 2a14 0814     ...{....*."".*..
+   de0e8:	0055 0055 aa55 aa55 aa55 55ff 55ff 00ff     U.U.U.U.U..U.U..
+   de0f8:	0000 00ff 1010 ff10 1400 1414 00ff 1010     ................
+   de108:	00ff 10ff f010 f010 1414 fc14 1400 f714     ................
+   de118:	ff00 0000 00ff 14ff f414 fc04 1414 1017     ................
+   de128:	101f 1f10 1f10 1414 1f14 1000 1010 00f0     ................
+   de138:	0000 1f00 1010 1010 101f 1010 f010 0010     ................
+   de148:	0000 10ff 1010 1010 1010 1010 10ff 0000     ................
+   de158:	ff00 0014 ff00 ff00 0000 101f 0017 fc00     ................
+   de168:	f404 1414 1017 1417 f414 f404 0000 00ff     ................
+   de178:	14f7 1414 1414 1414 00f7 14f7 1414 1417     ................
+   de188:	1010 101f 141f 1414 14f4 1010 10f0 00f0     ................
+   de198:	1f00 1f10 0000 1f00 0014 0000 14fc 0000     ................
+   de1a8:	10f0 10f0 ff10 ff10 1414 ff14 1014 1010     ................
+   de1b8:	001f 0000 f000 ff10 ffff ffff f0f0 f0f0     ................
+   de1c8:	fff0 ffff 0000 0000 ff00 0fff 0f0f 0f0f     ................
+   de1d8:	4438 3844 fc44 4a4a 344a 027e 0602 0206     8DD8D.JJJ4~.....
+   de1e8:	027e 027e 5563 4149 3863 4444 043c 7e40     ~.~.cUIAc8DD<.@~
+   de1f8:	1e20 0620 7e02 0202 a599 a5e7 1c99 492a      . ..~........*I
+   de208:	1c2a 724c 7201 304c 4d4a 304d 4830 4878     *.Lr.rL0JMM00HxH
+   de218:	bc30 5a62 3d46 493e 4949 7e00 0101 7e01     0.bZF=>III.~...~
+   de228:	2a2a 2a2a 442a 5f44 4444 5140 444a 4040     *****DD_DD@QJD@@
+   de238:	4a44 4051 0000 01ff e003 ff80 0000 0808     DJQ@............
+   de248:	6b6b 3608 3612 3624 0f06 0f09 0006 1800     kk.6.6$6........
+   de258:	0018 0000 1010 3000 ff40 0101 1f00 0101     .......0@.......
+   de268:	001e 1d19 1217 3c00 3c3c 003c 0000 0000     .......<<<<.....
 
-000de274 <_ZTV12Adafruit_GFX>:
+000de278 <_ZTV12Adafruit_GFX>:
 	...
-   de284:	7915 000d 87fd 000d 40a5 000d 731d 000d     .y.......@...s..
-   de294:	731f 000d 7351 000d 732d 000d 733f 000d     .s..Qs..-s..?s..
-   de2a4:	7261 000d 731d 000d 7549 000d 74c3 000d     ar...s..Iu...t..
-   de2b4:	7369 000d 73a7 000d 73e1 000d 7427 000d     is...s...s..'t..
-   de2c4:	74c5 000d 7443 000d                         .t..Ct..
+   de288:	7915 000d 87fd 000d 40a5 000d 731d 000d     .y.......@...s..
+   de298:	731f 000d 7351 000d 732d 000d 733f 000d     .s..Qs..-s..?s..
+   de2a8:	7261 000d 731d 000d 7549 000d 74c3 000d     ar...s..Iu...t..
+   de2b8:	7369 000d 73a7 000d 73e1 000d 7427 000d     is...s...s..'t..
+   de2c8:	74c5 000d 7443 000d                         .t..Ct..
 
-000de2cc <_ZTV15Adafruit_SH110X>:
+000de2d0 <_ZTV15Adafruit_SH110X>:
 	...
-   de2d4:	40a5 000d 40a5 000d 7915 000d 87fd 000d     .@...@...y......
-   de2e4:	6ef3 000d 731d 000d 731f 000d 7351 000d     .n...s...s..Qs..
-   de2f4:	732d 000d 733f 000d 7261 000d 731d 000d     -s..?s..ar...s..
-   de304:	7549 000d 70ef 000d 7369 000d 73a7 000d     Iu...p..is...s..
-   de314:	73e1 000d 7427 000d 74c5 000d 7443 000d     .s..'t...t..Ct..
-   de324:	7a23 000d                                   #z..
+   de2d8:	40a5 000d 40a5 000d 7915 000d 87fd 000d     .@...@...y......
+   de2e8:	6ef3 000d 731d 000d 731f 000d 7351 000d     .n...s...s..Qs..
+   de2f8:	732d 000d 733f 000d 7261 000d 731d 000d     -s..?s..ar...s..
+   de308:	7549 000d 70ef 000d 7369 000d 73a7 000d     Iu...p..is...s..
+   de318:	73e1 000d 7427 000d 74c5 000d 7443 000d     .s..'t...t..Ct..
+   de328:	7a23 000d                                   #z..
 
-000de328 <_ZL12splash2_data>:
-   de328:	0000 0060 0000 0000 0000 0000 0000 0000     ..`.............
-   de338:	e000 0000 0000 0000 0000 0000 0000 0100     ................
-   de348:	00e0 0000 0000 0000 0000 0000 0000 f001     ................
+000de32c <_ZL12splash2_data>:
+   de32c:	0000 0060 0000 0000 0000 0000 0000 0000     ..`.............
+   de33c:	e000 0000 0000 0000 0000 0000 0000 0100     ................
+   de34c:	00e0 0000 0000 0000 0000 0000 0000 f001     ................
 	...
-   de364:	0300 00f0 0000 0000 0000 0000 0000 0000     ................
-   de374:	f007 0000 0000 0000 0000 0000 0000 0700     ................
-   de384:	00f8 0000 0000 0000 0000 0000 0000 f80f     ................
-   de394:	0000 0300 00c0 007e 0100 00e0 0f7f 00f8     ......~.........
-   de3a4:	0000 c003 fe00 0000 e001 ff00 f8ef 0000     ................
-   de3b4:	0300 00c0 00fe 0100 00e0 ffff 00f8 0000     ................
-   de3c4:	c003 f000 0000 0f00 7f00 7ffe 00c0 0300     ................
-   de3d4:	00c0 00f0 0000 000f fe3f f87f f13f cffb     ........?...?...
-   de3e4:	fefc bcf3 ef3d 1fe0 7ffe 7fff fffb fedf     ....=...........
-   de3f4:	fffe 3dbc e0ef c61f ffff fb7f dfff fefe     ...=............
-   de404:	bcff ef3d 0fe0 c7e3 78fe c37b 1ede fff0     ..=......x{.....
-   de414:	3dbc 00ef ff07 fc87 7b78 dec3 f01e 3cf8     .=......x{.....<
-   de424:	ef3d 0100 ffff 00f0 c37b 1ec0 f0f0 3d3c     =.......{.....<=
-   de434:	00ef f301 e07f fb3f cfc3 f0fe 3cf0 ef3d     ......?......<=.
-   de444:	0300 3fe3 7f80 c3fb fedf f0f0 3d3c 00ef     ...?........<=..
-   de454:	e707 003c 7b78 dec3 f01e 3cf0 ef3d 0700     ..<.x{.....<=...
-   de464:	beff 7800 c37b 1ede f0f0 3d3c 00ef ff07     ...x{.....<=....
-   de474:	00fe 7b78 dec3 f01e 3cf0 ef3d 0f00 feff     ..x{.....<=.....
-   de484:	7f00 fffb fedf f0f0 fd3f e0ef ff0f 00ff     ........?.......
-   de494:	fb7f dfff f0fe 3ff0 effd 0fe0 fff9 3e00     .......?.......>
-   de4a4:	f979 9ecf f0f0 3d1f e0e7 f11f 00ff 0000     y......=........
+   de368:	0300 00f0 0000 0000 0000 0000 0000 0000     ................
+   de378:	f007 0000 0000 0000 0000 0000 0000 0700     ................
+   de388:	00f8 0000 0000 0000 0000 0000 0000 f80f     ................
+   de398:	0000 0300 00c0 007e 0100 00e0 0f7f 00f8     ......~.........
+   de3a8:	0000 c003 fe00 0000 e001 ff00 f8ef 0000     ................
+   de3b8:	0300 00c0 00fe 0100 00e0 ffff 00f8 0000     ................
+   de3c8:	c003 f000 0000 0f00 7f00 7ffe 00c0 0300     ................
+   de3d8:	00c0 00f0 0000 000f fe3f f87f f13f cffb     ........?...?...
+   de3e8:	fefc bcf3 ef3d 1fe0 7ffe 7fff fffb fedf     ....=...........
+   de3f8:	fffe 3dbc e0ef c61f ffff fb7f dfff fefe     ...=............
+   de408:	bcff ef3d 0fe0 c7e3 78fe c37b 1ede fff0     ..=......x{.....
+   de418:	3dbc 00ef ff07 fc87 7b78 dec3 f01e 3cf8     .=......x{.....<
+   de428:	ef3d 0100 ffff 00f0 c37b 1ec0 f0f0 3d3c     =.......{.....<=
+   de438:	00ef f301 e07f fb3f cfc3 f0fe 3cf0 ef3d     ......?......<=.
+   de448:	0300 3fe3 7f80 c3fb fedf f0f0 3d3c 00ef     ...?........<=..
+   de458:	e707 003c 7b78 dec3 f01e 3cf0 ef3d 0700     ..<.x{.....<=...
+   de468:	beff 7800 c37b 1ede f0f0 3d3c 00ef ff07     ...x{.....<=....
+   de478:	00fe 7b78 dec3 f01e 3cf0 ef3d 0f00 feff     ..x{.....<=.....
+   de488:	7f00 fffb fedf f0f0 fd3f e0ef ff0f 00ff     ........?.......
+   de498:	fb7f dfff f0fe 3ff0 effd 0fe0 fff9 3e00     .......?.......>
+   de4a8:	f979 9ecf f0f0 3d1f e0e7 f11f 00ff 0000     y......=........
 	...
-   de4bc:	1f00 ff80 7f00 ffff ffff ffff ffff e0ff     ................
-   de4cc:	001c 007f ff7f ffff b4fe 886d 188d 00e0     ..........m.....
-   de4dc:	1f00 7f00 ffff feff ad95 b57d e077 0000     ..........}.w...
-   de4ec:	000f ff7f ffff a5fe 9dad 198d 00e0 0600     ................
-   de4fc:	7f00 ffff feff adb5 b5ed e07e               ..........~.
+   de4c0:	1f00 ff80 7f00 ffff ffff ffff ffff e0ff     ................
+   de4d0:	001c 007f ff7f ffff b4fe 886d 188d 00e0     ..........m.....
+   de4e0:	1f00 7f00 ffff feff ad95 b57d e077 0000     ..........}.w...
+   de4f0:	000f ff7f ffff a5fe 9dad 198d 00e0 0600     ................
+   de500:	7f00 ffff feff adb5 b5ed e07e               ..........~.
 
-000de508 <_ZTV15Adafruit_SH1107>:
+000de50c <_ZTV15Adafruit_SH1107>:
 	...
-   de510:	7bc1 000d 7bd5 000d 7915 000d 87fd 000d     .{...{...y......
-   de520:	6ef3 000d 731d 000d 731f 000d 7351 000d     .n...s...s..Qs..
-   de530:	732d 000d 733f 000d 7261 000d 731d 000d     -s..?s..ar...s..
-   de540:	7549 000d 70ef 000d 7369 000d 73a7 000d     Iu...p..is...s..
-   de550:	73e1 000d 7427 000d 74c5 000d 7443 000d     .s..'t...t..Ct..
-   de560:	7a23 000d                                   #z..
+   de514:	7bc1 000d 7bd5 000d 7915 000d 87fd 000d     .{...{...y......
+   de524:	6ef3 000d 731d 000d 731f 000d 7351 000d     .n...s...s..Qs..
+   de534:	732d 000d 733f 000d 7261 000d 731d 000d     -s..?s..ar...s..
+   de544:	7549 000d 70ef 000d 7369 000d 73a7 000d     Iu...p..is...s..
+   de554:	73e1 000d 7427 000d 74c5 000d 7443 000d     .s..'t...t..Ct..
+   de564:	7a23 000d                                   #z..
 
-000de564 <_ZZN15Adafruit_SH11075beginEhbE12init_128x128>:
-   de564:	00d3 7fa8                                   ....
+000de568 <_ZZN15Adafruit_SH11075beginEhbE12init_128x128>:
+   de568:	00d3 7fa8                                   ....
 
-000de568 <_ZZN15Adafruit_SH11075beginEhbE4init>:
-   de568:	d5ae 2051 4f81 8aad c0a0 00dc 60d3 22d9     ..Q .O.......`."
-   de578:	35db 3fa8 a6a4 0000                         .5.?....
+000de56c <_ZZN15Adafruit_SH11075beginEhbE4init>:
+   de56c:	d5ae 2051 4f81 8aad c0a0 00dc 60d3 22d9     ..Q .O.......`."
+   de57c:	35db 3fa8 a6a4 0000                         .5.?....
 
-000de580 <_ZTVN5spark13EthernetClassE>:
+000de584 <_ZTVN5spark13EthernetClassE>:
 	...
-   de588:	83cb 000d 83c1 000d 83b7 000d 83ad 000d     ................
-   de598:	83a1 000d 8395 000d 9827 000d 982f 000d     ........'.../...
-   de5a8:	8389 000d 8381 000d 8377 000d 836d 000d     ........w...m...
-   de5b8:	985f 000d                                   _...
+   de58c:	83cb 000d 83c1 000d 83b7 000d 83ad 000d     ................
+   de59c:	83a1 000d 8395 000d 9827 000d 982f 000d     ........'.../...
+   de5ac:	8389 000d 8381 000d 8377 000d 836d 000d     ........w...m...
+   de5bc:	985f 000d                                   _...
 
-000de5bc <_ZN12_GLOBAL__N_1L14clock_divisorsE>:
-   de5bc:	0800 1810 2820 3830 616e 006e 6e69 0066     .... (08nan.inf.
-   de5cc:	766f 0066 7061 0070 5925 252d 2d6d 6425     ovf.app.%Y-%m-%d
-   de5dc:	2554 3a48 4d25 253a 2553 007a 7361 7463     T%H:%M:%S%z.asct
-   de5ec:	6d69 0065                                   ime.
+000de5c0 <_ZN12_GLOBAL__N_1L14clock_divisorsE>:
+   de5c0:	0800 1810 2820 3830 616e 006e 6e69 0066     .... (08nan.inf.
+   de5d0:	766f 0066 7061 0070 5925 252d 2d6d 6425     ovf.app.%Y-%m-%d
+   de5e0:	2554 3a48 4d25 253a 2553 007a 7361 7463     T%H:%M:%S%z.asct
+   de5f0:	6d69 0065                                   ime.
 
-000de5f0 <_ZTVSt15_Sp_counted_ptrIPN8particle6detail10FutureImplIbNS1_13FutureContextEEELN9__gnu_cxx12_Lock_policyE0EE>:
+000de5f4 <_ZTVSt15_Sp_counted_ptrIPN8particle6detail10FutureImplIbNS1_13FutureContextEEELN9__gnu_cxx12_Lock_policyE0EE>:
 	...
-   de5f8:	8dad 000d 8db3 000d 8df1 000d 8dc1 000d     ................
-   de608:	8daf 000d                                   ....
+   de5fc:	8dad 000d 8db3 000d 8df1 000d 8dc1 000d     ................
+   de60c:	8daf 000d                                   ....
 
-000de60c <_ZTV9IPAddress>:
+000de610 <_ZTV9IPAddress>:
 	...
-   de614:	92f5 000d 92e5 000d 92e7 000d               ............
+   de618:	92f5 000d 92e5 000d 92e7 000d               ............
 
-000de620 <_ZTV9USBSerial>:
+000de624 <_ZTV9USBSerial>:
 	...
-   de628:	93cd 000d 9435 000d 940b 000d 87fd 000d     ....5...........
-   de638:	93fd 000d 93cf 000d 93df 000d 942f 000d     ............/...
-   de648:	93ef 000d 93c7 000d                         ........
+   de62c:	93cd 000d 9435 000d 940b 000d 87fd 000d     ....5...........
+   de63c:	93fd 000d 93cf 000d 93df 000d 942f 000d     ............/...
+   de64c:	93ef 000d 93c7 000d                         ........
 
-000de650 <_ZTVN5spark13CellularClassE>:
+000de654 <_ZTVN5spark13CellularClassE>:
 	...
-   de658:	9593 000d 9589 000d 957f 000d 9535 000d     ............5...
-   de668:	9573 000d 9567 000d 9827 000d 982f 000d     s...g...'.../...
-   de678:	955b 000d 9553 000d 9549 000d 953f 000d     [...S...I...?...
-   de688:	985f 000d                                   _...
+   de65c:	9593 000d 9589 000d 957f 000d 9535 000d     ............5...
+   de66c:	9573 000d 9567 000d 9827 000d 982f 000d     s...g...'.../...
+   de67c:	955b 000d 9553 000d 9549 000d 953f 000d     [...S...I...?...
+   de68c:	985f 000d                                   _...
 
-000de68c <_ZTV11USARTSerial>:
+000de690 <_ZTV11USARTSerial>:
 	...
-   de694:	95cd 000d 963b 000d 9613 000d 87fd 000d     ....;...........
-   de6a4:	95e3 000d 95ff 000d 95f1 000d 960d 000d     ................
-   de6b4:	95cf 000d 95d5 000d                         ........
+   de698:	95cd 000d 963b 000d 9613 000d 87fd 000d     ....;...........
+   de6a8:	95e3 000d 95ff 000d 95f1 000d 960d 000d     ................
+   de6b8:	95cf 000d 95d5 000d                         ........
 
-000de6bc <_ZTV7TwoWire>:
+000de6c0 <_ZTV7TwoWire>:
 	...
-   de6c4:	96e9 000d 9733 000d 970b 000d 96eb 000d     ....3...........
-   de6d4:	9713 000d 971b 000d 9723 000d 972b 000d     ........#...+...
+   de6c8:	96e9 000d 9733 000d 970b 000d 96eb 000d     ....3...........
+   de6d8:	9713 000d 971b 000d 9723 000d 972b 000d     ........#...+...
 
-000de6e4 <_ZTVN5spark12NetworkClassE>:
+000de6e8 <_ZTVN5spark12NetworkClassE>:
 	...
-   de6ec:	97e7 000d 97f1 000d 97fb 000d 9805 000d     ................
-   de6fc:	980f 000d 981b 000d 9827 000d 982f 000d     ........'.../...
-   de70c:	9837 000d 9843 000d 984b 000d 9855 000d     7...C...K...U...
-   de71c:	985f 000d                                   _...
+   de6f0:	97e7 000d 97f1 000d 97fb 000d 9805 000d     ................
+   de700:	980f 000d 981b 000d 9827 000d 982f 000d     ........'.../...
+   de710:	9837 000d 9843 000d 984b 000d 9855 000d     7...C...K...U...
+   de720:	985f 000d                                   _...
 
-000de720 <_ZSt7nothrow>:
-   de720:	0000 0000 6f70 0077                         ....pow.
+000de724 <_ZSt7nothrow>:
+   de724:	0000 0000 6f70 0077 0000 0000               ....pow.....
 
-000de728 <CSWTCH.8>:
-   de728:	2d18 5444 21fb bfe9 21d2 7f33 d97c 4002     .-DT.!...!3.|..@
-   de738:	21d2 7f33 d97c c002                         .!3.|...
+000de730 <CSWTCH.8>:
+   de730:	2d18 5444 21fb bfe9 21d2 7f33 d97c 4002     .-DT.!...!3.|..@
+   de740:	21d2 7f33 d97c c002                         .!3.|...
 
-000de740 <CSWTCH.9>:
-   de740:	0000 0000 0000 8000 2d18 5444 21fb 4009     .........-DT.!.@
-   de750:	2d18 5444 21fb c009 0000 0000               .-DT.!......
+000de748 <CSWTCH.9>:
+   de748:	0000 0000 0000 8000 2d18 5444 21fb 4009     .........-DT.!.@
+   de758:	2d18 5444 21fb c009 0000 0000               .-DT.!......
 
-000de75c <CSWTCH.8>:
-   de75c:	0fdb bf49 cbe4 4016 cbe4 c016               ..I....@....
+000de764 <CSWTCH.8>:
+   de764:	0fdb bf49 cbe4 4016 cbe4 c016               ..I....@....
 
-000de768 <CSWTCH.9>:
-   de768:	0000 8000 0fdb 4049 0fdb c049               ......I@..I.
+000de770 <CSWTCH.9>:
+   de770:	0000 8000 0fdb 4049 0fdb c049               ......I@..I.
 
-000de774 <npio2_hw>:
-   de774:	0f00 3fc9 0f00 4049 cb00 4096 0f00 40c9     ...?..I@...@...@
-   de784:	5300 40fb cb00 4116 ed00 412f 0f00 4149     .S.@...A../A..IA
-   de794:	3100 4162 5300 417b 3a00 418a cb00 4196     .1bA.S{A.:.A...A
-   de7a4:	5c00 41a3 ed00 41af 7e00 41bc 0f00 41c9     .\.A...A.~.A...A
-   de7b4:	a000 41d5 3100 41e2 c200 41ee 5300 41fb     ...A.1.A...A.S.A
-   de7c4:	f200 4203 3a00 420a 8300 4210 cb00 4216     ...B.:.B...B...B
-   de7d4:	1400 421d 5c00 4223 a500 4229 ed00 422f     ...B.\#B..)B../B
-   de7e4:	3600 4236 7e00 423c c700 4242 0f00 4249     .66B.~<B..BB..IB
+000de77c <npio2_hw>:
+   de77c:	0f00 3fc9 0f00 4049 cb00 4096 0f00 40c9     ...?..I@...@...@
+   de78c:	5300 40fb cb00 4116 ed00 412f 0f00 4149     .S.@...A../A..IA
+   de79c:	3100 4162 5300 417b 3a00 418a cb00 4196     .1bA.S{A.:.A...A
+   de7ac:	5c00 41a3 ed00 41af 7e00 41bc 0f00 41c9     .\.A...A.~.A...A
+   de7bc:	a000 41d5 3100 41e2 c200 41ee 5300 41fb     ...A.1.A...A.S.A
+   de7cc:	f200 4203 3a00 420a 8300 4210 cb00 4216     ...B.:.B...B...B
+   de7dc:	1400 421d 5c00 4223 a500 4229 ed00 422f     ...B.\#B..)B../B
+   de7ec:	3600 4236 7e00 423c c700 4242 0f00 4249     .66B.~<B..BB..IB
 
-000de7f4 <two_over_pi>:
-   de7f4:	00a2 0000 00f9 0000 0083 0000 006e 0000     ............n...
-   de804:	004e 0000 0044 0000 0015 0000 0029 0000     N...D.......)...
-   de814:	00fc 0000 0027 0000 0057 0000 00d1 0000     ....'...W.......
-   de824:	00f5 0000 0034 0000 00dd 0000 00c0 0000     ....4...........
-   de834:	00db 0000 0062 0000 0095 0000 0099 0000     ....b...........
-   de844:	003c 0000 0043 0000 0090 0000 0041 0000     <...C.......A...
-   de854:	00fe 0000 0051 0000 0063 0000 00ab 0000     ....Q...c.......
-   de864:	00de 0000 00bb 0000 00c5 0000 0061 0000     ............a...
-   de874:	00b7 0000 0024 0000 006e 0000 003a 0000     ....$...n...:...
-   de884:	0042 0000 004d 0000 00d2 0000 00e0 0000     B...M...........
-   de894:	0006 0000 0049 0000 002e 0000 00ea 0000     ....I...........
-   de8a4:	0009 0000 00d1 0000 0092 0000 001c 0000     ................
-   de8b4:	00fe 0000 001d 0000 00eb 0000 001c 0000     ................
-   de8c4:	00b1 0000 0029 0000 00a7 0000 003e 0000     ....).......>...
-   de8d4:	00e8 0000 0082 0000 0035 0000 00f5 0000     ........5.......
-   de8e4:	002e 0000 00bb 0000 0044 0000 0084 0000     ........D.......
-   de8f4:	00e9 0000 009c 0000 0070 0000 0026 0000     ........p...&...
-   de904:	00b4 0000 005f 0000 007e 0000 0041 0000     ...._...~...A...
-   de914:	0039 0000 0091 0000 00d6 0000 0039 0000     9...........9...
-   de924:	0083 0000 0053 0000 0039 0000 00f4 0000     ....S...9.......
-   de934:	009c 0000 0084 0000 005f 0000 008b 0000     ........_.......
-   de944:	00bd 0000 00f9 0000 0028 0000 003b 0000     ........(...;...
-   de954:	001f 0000 00f8 0000 0097 0000 00ff 0000     ................
-   de964:	00de 0000 0005 0000 0098 0000 000f 0000     ................
-   de974:	00ef 0000 002f 0000 0011 0000 008b 0000     ..../...........
-   de984:	005a 0000 000a 0000 006d 0000 001f 0000     Z.......m.......
-   de994:	006d 0000 0036 0000 007e 0000 00cf 0000     m...6...~.......
-   de9a4:	0027 0000 00cb 0000 0009 0000 00b7 0000     '...............
-   de9b4:	004f 0000 0046 0000 003f 0000 0066 0000     O...F...?...f...
-   de9c4:	009e 0000 005f 0000 00ea 0000 002d 0000     ...._.......-...
-   de9d4:	0075 0000 0027 0000 00ba 0000 00c7 0000     u...'...........
-   de9e4:	00eb 0000 00e5 0000 00f1 0000 007b 0000     ............{...
-   de9f4:	003d 0000 0007 0000 0039 0000 00f7 0000     =.......9.......
-   dea04:	008a 0000 0052 0000 0092 0000 00ea 0000     ....R...........
-   dea14:	006b 0000 00fb 0000 005f 0000 00b1 0000     k......._.......
-   dea24:	001f 0000 008d 0000 005d 0000 0008 0000     ........].......
-   dea34:	0056 0000 0003 0000 0030 0000 0046 0000     V.......0...F...
-   dea44:	00fc 0000 007b 0000 006b 0000 00ab 0000     ....{...k.......
-   dea54:	00f0 0000 00cf 0000 00bc 0000 0020 0000     ............ ...
-   dea64:	009a 0000 00f4 0000 0036 0000 001d 0000     ........6.......
-   dea74:	00a9 0000 00e3 0000 0091 0000 0061 0000     ............a...
-   dea84:	005e 0000 00e6 0000 001b 0000 0008 0000     ^...............
-   dea94:	0065 0000 0099 0000 0085 0000 005f 0000     e..........._...
-   deaa4:	0014 0000 00a0 0000 0068 0000 0040 0000     ........h...@...
-   deab4:	008d 0000 00ff 0000 00d8 0000 0080 0000     ................
-   deac4:	004d 0000 0073 0000 0027 0000 0031 0000     M...s...'...1...
-   dead4:	0006 0000 0006 0000 0015 0000 0056 0000     ............V...
-   deae4:	00ca 0000 0073 0000 00a8 0000 00c9 0000     ....s...........
-   deaf4:	0060 0000 00e2 0000 007b 0000 00c0 0000     `.......{.......
-   deb04:	008c 0000 006b 0000                         ....k...
+000de7fc <two_over_pi>:
+   de7fc:	00a2 0000 00f9 0000 0083 0000 006e 0000     ............n...
+   de80c:	004e 0000 0044 0000 0015 0000 0029 0000     N...D.......)...
+   de81c:	00fc 0000 0027 0000 0057 0000 00d1 0000     ....'...W.......
+   de82c:	00f5 0000 0034 0000 00dd 0000 00c0 0000     ....4...........
+   de83c:	00db 0000 0062 0000 0095 0000 0099 0000     ....b...........
+   de84c:	003c 0000 0043 0000 0090 0000 0041 0000     <...C.......A...
+   de85c:	00fe 0000 0051 0000 0063 0000 00ab 0000     ....Q...c.......
+   de86c:	00de 0000 00bb 0000 00c5 0000 0061 0000     ............a...
+   de87c:	00b7 0000 0024 0000 006e 0000 003a 0000     ....$...n...:...
+   de88c:	0042 0000 004d 0000 00d2 0000 00e0 0000     B...M...........
+   de89c:	0006 0000 0049 0000 002e 0000 00ea 0000     ....I...........
+   de8ac:	0009 0000 00d1 0000 0092 0000 001c 0000     ................
+   de8bc:	00fe 0000 001d 0000 00eb 0000 001c 0000     ................
+   de8cc:	00b1 0000 0029 0000 00a7 0000 003e 0000     ....).......>...
+   de8dc:	00e8 0000 0082 0000 0035 0000 00f5 0000     ........5.......
+   de8ec:	002e 0000 00bb 0000 0044 0000 0084 0000     ........D.......
+   de8fc:	00e9 0000 009c 0000 0070 0000 0026 0000     ........p...&...
+   de90c:	00b4 0000 005f 0000 007e 0000 0041 0000     ...._...~...A...
+   de91c:	0039 0000 0091 0000 00d6 0000 0039 0000     9...........9...
+   de92c:	0083 0000 0053 0000 0039 0000 00f4 0000     ....S...9.......
+   de93c:	009c 0000 0084 0000 005f 0000 008b 0000     ........_.......
+   de94c:	00bd 0000 00f9 0000 0028 0000 003b 0000     ........(...;...
+   de95c:	001f 0000 00f8 0000 0097 0000 00ff 0000     ................
+   de96c:	00de 0000 0005 0000 0098 0000 000f 0000     ................
+   de97c:	00ef 0000 002f 0000 0011 0000 008b 0000     ..../...........
+   de98c:	005a 0000 000a 0000 006d 0000 001f 0000     Z.......m.......
+   de99c:	006d 0000 0036 0000 007e 0000 00cf 0000     m...6...~.......
+   de9ac:	0027 0000 00cb 0000 0009 0000 00b7 0000     '...............
+   de9bc:	004f 0000 0046 0000 003f 0000 0066 0000     O...F...?...f...
+   de9cc:	009e 0000 005f 0000 00ea 0000 002d 0000     ...._.......-...
+   de9dc:	0075 0000 0027 0000 00ba 0000 00c7 0000     u...'...........
+   de9ec:	00eb 0000 00e5 0000 00f1 0000 007b 0000     ............{...
+   de9fc:	003d 0000 0007 0000 0039 0000 00f7 0000     =.......9.......
+   dea0c:	008a 0000 0052 0000 0092 0000 00ea 0000     ....R...........
+   dea1c:	006b 0000 00fb 0000 005f 0000 00b1 0000     k......._.......
+   dea2c:	001f 0000 008d 0000 005d 0000 0008 0000     ........].......
+   dea3c:	0056 0000 0003 0000 0030 0000 0046 0000     V.......0...F...
+   dea4c:	00fc 0000 007b 0000 006b 0000 00ab 0000     ....{...k.......
+   dea5c:	00f0 0000 00cf 0000 00bc 0000 0020 0000     ............ ...
+   dea6c:	009a 0000 00f4 0000 0036 0000 001d 0000     ........6.......
+   dea7c:	00a9 0000 00e3 0000 0091 0000 0061 0000     ............a...
+   dea8c:	005e 0000 00e6 0000 001b 0000 0008 0000     ^...............
+   dea9c:	0065 0000 0099 0000 0085 0000 005f 0000     e..........._...
+   deaac:	0014 0000 00a0 0000 0068 0000 0040 0000     ........h...@...
+   deabc:	008d 0000 00ff 0000 00d8 0000 0080 0000     ................
+   deacc:	004d 0000 0073 0000 0027 0000 0031 0000     M...s...'...1...
+   deadc:	0006 0000 0006 0000 0015 0000 0056 0000     ............V...
+   deaec:	00ca 0000 0073 0000 00a8 0000 00c9 0000     ....s...........
+   deafc:	0060 0000 00e2 0000 007b 0000 00c0 0000     `.......{.......
+   deb0c:	008c 0000 006b 0000                         ....k...
 
-000deb0c <PIo2>:
-   deb0c:	0000 3fc9 0000 39f0 0000 37da 0000 33a2     ...?...9...7...3
-   deb1c:	0000 2e84 0000 2b50 0000 27c2 0000 22d0     ......P+...'..."
-   deb2c:	0000 1fc4 0000 1bc6 0000 1744               ..........D.
+000deb14 <PIo2>:
+   deb14:	0000 3fc9 0000 39f0 0000 37da 0000 33a2     ...?...9...7...3
+   deb24:	0000 2e84 0000 2b50 0000 27c2 0000 22d0     ......P+...'..."
+   deb34:	0000 1fc4 0000 1bc6 0000 1744               ..........D.
 
-000deb38 <init_jk>:
-   deb38:	0004 0000 0007 0000 0009 0000 0000 0000     ................
+000deb40 <init_jk>:
+   deb40:	0004 0000 0007 0000 0009 0000 0000 0000     ................
 
-000deb48 <atanhi>:
-   deb48:	bb4f 0561 ac67 3fdd 2d18 5444 21fb 3fe9     O.a.g..?.-DT.!.?
-   deb58:	f69b d281 730b 3fef 2d18 5444 21fb 3ff9     .....s.?.-DT.!.?
+000deb50 <atanhi>:
+   deb50:	bb4f 0561 ac67 3fdd 2d18 5444 21fb 3fe9     O.a.g..?.-DT.!.?
+   deb60:	f69b d281 730b 3fef 2d18 5444 21fb 3ff9     .....s.?.-DT.!.?
 
-000deb68 <atanlo>:
-   deb68:	65e2 222f 2b7f 3c7a 5c07 3314 a626 3c81     .e/".+z<.\.3&..<
-   deb78:	cbbd 7af0 0788 3c70 5c07 3314 a626 3c91     ...z..p<.\.3&..<
+000deb70 <atanlo>:
+   deb70:	65e2 222f 2b7f 3c7a 5c07 3314 a626 3c81     .e/".+z<.\.3&..<
+   deb80:	cbbd 7af0 0788 3c70 5c07 3314 a626 3c91     ...z..p<.\.3&..<
 
-000deb88 <TWO52>:
-   deb88:	0000 0000 0000 4330 0000 0000 0000 c330     ......0C......0.
+000deb90 <TWO52>:
+   deb90:	0000 0000 0000 4330 0000 0000 0000 c330     ......0C......0.
 
-000deb98 <atanhi>:
-   deb98:	6338 3eed 0fda 3f49 985e 3f7b 0fda 3fc9     8c.>..I?^.{?...?
+000deba0 <atanhi>:
+   deba0:	6338 3eed 0fda 3f49 985e 3f7b 0fda 3fc9     8c.>..I?^.{?...?
 
-000deba8 <atanlo>:
-   deba8:	3769 31ac 2168 3322 0fb4 3314 2168 33a2     i7.1h!"3...3h!.3
+000debb0 <atanlo>:
+   debb0:	3769 31ac 2168 3322 0fb4 3314 2168 33a2     i7.1h!"3...3h!.3
 
-000debb8 <link_const_variable_data_end>:
-   debb8:	000d4db1 	.word	0x000d4db1
-   debbc:	000d83d5 	.word	0x000d83d5
-   debc0:	000d856d 	.word	0x000d856d
-   debc4:	000d87ed 	.word	0x000d87ed
-   debc8:	000d8b7d 	.word	0x000d8b7d
-   debcc:	000d8c01 	.word	0x000d8c01
-   debd0:	000d8c69 	.word	0x000d8c69
-   debd4:	000d959d 	.word	0x000d959d
-   debd8:	000d9931 	.word	0x000d9931
+000debc0 <link_const_variable_data_end>:
+   debc0:	000d4db1 	.word	0x000d4db1
+   debc4:	000d83d5 	.word	0x000d83d5
+   debc8:	000d856d 	.word	0x000d856d
+   debcc:	000d87ed 	.word	0x000d87ed
+   debd0:	000d8b7d 	.word	0x000d8b7d
+   debd4:	000d8c01 	.word	0x000d8c01
+   debd8:	000d8c69 	.word	0x000d8c69
+   debdc:	000d959d 	.word	0x000d959d
+   debe0:	000d9931 	.word	0x000d9931
 
-000debdc <link_constructors_end>:
-   debdc:	00000000 	.word	0x00000000
+000debe4 <link_constructors_end>:
+	...
