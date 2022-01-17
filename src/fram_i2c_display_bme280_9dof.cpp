@@ -110,7 +110,7 @@ Adafruit_SH1107 display = Adafruit_SH1107(64, 128, &Wire);
 float compass_heading;
 
 /* Set the delay between fresh samples */
-#define BNO055_SAMPLERATE_DELAY_MS (1000)
+#define BNO055_SAMPLERATE_DELAY_MS (10000)
 
 // Check I2C device address and correct line below (by default address is 0x29 or 0x28)
 //                                   id, address
@@ -156,12 +156,21 @@ float psi;
 float dt;
 float bno_compass_heading;
 unsigned long millisOld;
+int64_t time_base = 0;
+int64_t time_counter  = 60;
 /**************************************************************************/
 /*
     Arduino setup function (automatically called at startup)
 */
 /**************************************************************************/
 void setup(void) {
+  time_base = Time.now();
+Serial.print("time base value =");
+Serial.print(time_base);
+Serial.print("\n");
+
+
+
 //wind speed and direction setup
 LastValue = 1;
 
@@ -292,7 +301,9 @@ if (i2ceeprom.begin(0x50)) {  // you can stick the new i2c addr in here, e.g. be
     Serial.print("Ooops, no BNO055 detected ... Check your wiring or I2C ADDR!");
     while(1);
   }
-   
+   Serial.print("time base value =");
+Serial.print(time_base);
+Serial.print("\n");
   delay(1000);
 
   /* Use external crystal for better accuracy */
@@ -350,6 +361,7 @@ millisOld=millis();
         while (!bno.isFullyCalibrated())
         {
             bno.getEvent(&event);
+            displayCalStatus();
             delay(BNO055_SAMPLERATE_DELAY_MS);
         }
     }
@@ -549,8 +561,26 @@ printValues();
   Serial.print(compass_heading, 4);
 
   bno_compass_heading = get_compass_heading();
+
   Serial.print("psi from bno055\n");
   Serial.print(bno_compass_heading);
+  Serial.print("\nunix time = ");
+  Serial.print(Time.now());
+Serial.print("time base value =");
+Serial.print(time_base);
+Serial.print("\n");
+// uint64_t time_difference = Time.now() - time_base;
+//   if(time_difference > time_counter ){
+//       SystemSleepConfiguration config;
+// config.mode(SystemSleepMode::STOP)
+//       .gpio(WKP, RISING)
+//       .duration(15min);
+//     System.sleep(config);
+//         time_base = Time.now();
+//   }
+  
+  Serial.print("\n");
+  Particle.publish("office temperature", String(bme.readTemperature()*1.8F + 32.));
 
 
       adafruit_bno055_offsets_t newCalib;
