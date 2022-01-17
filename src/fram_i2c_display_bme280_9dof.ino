@@ -106,9 +106,7 @@ attachInterrupt(wind_pin, isr_rotation, FALLING);
 Serial.println("Davis Wind Speed Test");
 Serial.println("Rotations\tMPH");
 
-//variables for calibration read from memory
-int test = 55;
-    int eeAddress = 0;
+
     long bnoID;
     bool foundCalib = false;
 
@@ -139,18 +137,16 @@ int test = 55;
   pinMode(BUTTON_C, INPUT_PULLUP);
 
   // text display tests
-  display.setTextSize(2);
+  display.setTextSize(1);
   display.setTextColor(SH110X_WHITE);
   display.setCursor(0,0);
   display.print("BigdaddyAddie weather station!\n");
   display.print("connected!\n");
-  display.println("IP: 10.0.1.23");
-  display.println("Sending val #0");
   display.display(); // actually display all of the above
 
     unsigned status;
     
-    // default settings
+    // find the BME280
     status = bme.begin();  
     // You can also pass in a Wire library object like &Wire2
     // status = bme.begin(0x76, &Wire2)
@@ -163,11 +159,8 @@ int test = 55;
         Serial.print("        ID of 0x61 represents a BME 680.\n");
         while (1) delay(10);
     }
-  Serial.begin(9600);
-  Serial.println("WebSerial 3D Firmware"); Serial.println("");
 
   //add a test for fram
-
 if (i2ceeprom.begin(0x50)) {  // you can stick the new i2c addr in here, e.g. begin(0x51);
     Serial.println("Found I2C EEPROM");
   } else {
@@ -181,36 +174,10 @@ if (i2ceeprom.begin(0x50)) {  // you can stick the new i2c addr in here, e.g. be
 
   // Try to determine the size by writing a value and seeing if it changes the first byte
   Serial.println("Testing size!");
+int eeAddress = 0;
+eeprom_test();
 
-  uint32_t max_addr;
-  for (max_addr = 1; max_addr < 0xFFFF; max_addr++) {
-    if (i2ceeprom.read(max_addr) != test)
-      continue; // def didnt wrap around yet
-
-    // maybe wraped? try writing the inverse
-    if (! i2ceeprom.write(max_addr, (byte)~test)) {
-        Serial.print("Failed to write address 0x");
-        Serial.println(max_addr, HEX);
-    }
-
-    // read address 0x0 again
-    uint8_t val0 = i2ceeprom.read(0);
-
-    // re-write the old value
-    if (! i2ceeprom.write(max_addr, test)) {
-        Serial.print("Failed to re-write address 0x");
-        Serial.println(max_addr, HEX);
-    }    
-
-    // check if addr 0 was changed
-    if (val0 == (byte)~test) {
-      Serial.println("Found max address");
-      break;
-    }
-  }
-  Serial.print("This EEPROM can store ");
-  Serial.print(max_addr);
-  Serial.println(" bytes");
+  
 
 
 
@@ -771,4 +738,39 @@ thetaFold=thetaFnew;
  
  return(psi);
 //delay(BNO055_SAMPLERATE_DELAY_MS);
+}
+
+void eeprom_test(){
+  uint32_t max_addr;
+  //variables for calibration read from memory
+int test = 55;
+    
+  for (max_addr = 1; max_addr < 0xFFFF; max_addr++) {
+    if (i2ceeprom.read(max_addr) != test)
+      continue; // def didnt wrap around yet
+
+    // maybe wraped? try writing the inverse
+    if (! i2ceeprom.write(max_addr, (byte)~test)) {
+        Serial.print("Failed to write address 0x");
+        Serial.println(max_addr, HEX);
+    }
+
+    // read address 0x0 again
+    uint8_t val0 = i2ceeprom.read(0);
+
+    // re-write the old value
+    if (! i2ceeprom.write(max_addr, test)) {
+        Serial.print("Failed to re-write address 0x");
+        Serial.println(max_addr, HEX);
+    }    
+
+    // check if addr 0 was changed
+    if (val0 == (byte)~test) {
+      Serial.println("Found max address");
+      break;
+    }
+  }
+  Serial.print("This EEPROM can store ");
+  Serial.print(max_addr);
+  Serial.println(" bytes");
 }
