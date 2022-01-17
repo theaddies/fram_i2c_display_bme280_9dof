@@ -53,6 +53,7 @@ Adafruit_SH1107 display = Adafruit_SH1107(64, 128, &Wire);
 float compass_heading;
 
 /* Set the delay between fresh samples */
+#define BNO055_STARTUP_SAMPLE_DELAY_MS (1000)
 #define BNO055_SAMPLERATE_DELAY_MS (10000)
 
 // Check I2C device address and correct line below (by default address is 0x29 or 0x28)
@@ -191,14 +192,9 @@ if (i2ceeprom.begin(0x50)) {  // you can stick the new i2c addr in here, e.g. be
   // uint8_t test = 0xAF;
   // i2ceeprom.write(0x0, test);
 
-  // Try to determine the size by writing a value and seeing if it changes the first byte
-  Serial.println("Testing size!");
+
 int eeAddress = 0;
 eeprom_test();
-
-  
-
-
 
   /* Initialise the sensor */
   if(!bno.begin())
@@ -211,9 +207,6 @@ eeprom_test();
 Serial.print(time_base);
 Serial.print("\n");
   delay(1000);
-
-  /* Use external crystal for better accuracy */
-  bno.setExtCrystalUse(true);
    
   /* Display some basic information on this sensor */
   displaySensorDetails();
@@ -268,7 +261,7 @@ millisOld=millis();
         {
             bno.getEvent(&event);
             displayCalStatus();
-            delay(BNO055_SAMPLERATE_DELAY_MS);
+            delay(BNO055_STARTUP_SAMPLE_DELAY_MS);
         }
     }
     else
@@ -292,7 +285,7 @@ millisOld=millis();
             Serial.println("");
 
             /* Wait the specified delay before requesting new data */
-            delay(BNO055_SAMPLERATE_DELAY_MS);
+            delay(BNO055_STARTUP_SAMPLE_DELAY_MS);
         }
     }
 
@@ -317,37 +310,6 @@ millisOld=millis();
 
     Serial.println("\n--------------------------------\n");
     delay(500);
-    
-  // // validate the memory////////////////////////////////////////////////////////////////////
-  // Serial.println("Validating every address in memory");
-  // uint8_t val;
-  // for (uint16_t addr = 0; addr < max_addr; addr++) {
-  //   if (addr % 32 == 0) {
-  //     Serial.print("Testing address ");
-  //     Serial.print(addr);
-  //     Serial.print(" thru ");
-  //     Serial.println(addr+31);
-  //   }
-  //   val = i2ceeprom.read(addr);
-    
-  //   i2ceeprom.write(addr, 0x55);
-  //   if (i2ceeprom.read(addr) != 0x55) {
-  //     Serial.print("Failed to write 0x55 to address 0x");
-  //     Serial.println(addr, HEX);
-  //   }
-  //   i2ceeprom.write(addr, 0xAA);
-  //   if (i2ceeprom.read(addr) != 0xAA) {
-  //     Serial.print("Failed to write 0xAA to address 0x");
-  //     Serial.println(addr, HEX);
-  //   }
-    
-  //   i2ceeprom.write(addr, val);
-  //   if (i2ceeprom.read(addr) != val) {
-  //     Serial.print("Failed to write original value to address 0x");
-  //     Serial.println(addr, HEX);
-  //   }
-  // }
-  // Serial.println("Validated!");
   
 }
 
@@ -397,9 +359,11 @@ Rotations = 0;  // Set Rotations count to 0 ready for calculations
   /* Get a new sensor event */
   sensors_event_t event;
   bno.getEvent(&event);
-
+//This prints the BME280 vbalues to the serial port
 printValues();
+//This prints the BME280 vbalues to the LCD
   displayValues();
+
   delay(delayTime);
   if(!digitalRead(BUTTON_A)) display.print("A");
   if(!digitalRead(BUTTON_B)) display.print("B");
@@ -416,18 +380,18 @@ printValues();
   Serial.print((float)event.orientation.z);
   Serial.println(F(""));
 
-  /* The WebSerial 3D Model Viewer also expects data as roll, pitch, heading */
-  imu::Quaternion quat = bno.getQuat();
+  // /* The WebSerial 3D Model Viewer also expects data as roll, pitch, heading */
+  // imu::Quaternion quat = bno.getQuat();
   
-  Serial.print(F("Quaternion: "));
-  Serial.print((float)quat.w());
-  Serial.print(F(", "));
-  Serial.print((float)quat.x());
-  Serial.print(F(", "));
-  Serial.print((float)quat.y());
-  Serial.print(F(", "));
-  Serial.print((float)quat.z());
-  Serial.println(F(""));
+  // Serial.print(F("Quaternion: "));
+  // Serial.print((float)quat.w());
+  // Serial.print(F(", "));
+  // Serial.print((float)quat.x());
+  // Serial.print(F(", "));
+  // Serial.print((float)quat.y());
+  // Serial.print(F(", "));
+  // Serial.print((float)quat.z());
+  // Serial.println(F(""));
 
   /* Also send calibration data for each sensor. */
   uint8_t sys, gyro, accel, mag = 0;
@@ -763,7 +727,8 @@ void eeprom_test(){
   uint32_t max_addr;
   //variables for calibration read from memory
 int test = 55;
-    
+      // Try to determine the size by writing a value and seeing if it changes the first byte
+  Serial.println("Testing size!");
   for (max_addr = 1; max_addr < 0xFFFF; max_addr++) {
     if (i2ceeprom.read(max_addr) != test)
       continue; // def didnt wrap around yet
