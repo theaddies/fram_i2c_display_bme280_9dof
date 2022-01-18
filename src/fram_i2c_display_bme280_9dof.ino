@@ -306,46 +306,10 @@ digitalWrite(vane_switch, HIGH);
 
 float vane_wind_direction = measure_wind_direction();
 
-// VaneValue = analogRead(vane_pin);
-// //digitalWrite(vane_switch, LOW);
-// //Serial.println("analog read value = ");
-// //Serial.print(VaneValue);
-// Direction = map(VaneValue, 0, 4095, 0, 360);
-// CalDirection = Direction + Offset;
 
-// if(CalDirection > 360)
-// CalDirection = CalDirection - 360;
-
-// if(CalDirection < 0)
-// CalDirection = CalDirection + 360;
-
-
-// //delay(100);
-// if ((millis() - wind_speed_time) > wind_speed_time_interval) {
-// // Only update the display if change greater than 2 degrees.
-//   if(abs(CalDirection - LastValue) > 5)
-//   {
-//   Serial.print(VaneValue); Serial.print("\t\t");
-//   Serial.print(CalDirection); Serial.print("\t\t");
-//   getHeading(CalDirection);
-//   LastValue = CalDirection;
-//   }
-// WindSpeed = Rotations * .45;
-
-// Serial.print(Rotations); Serial.print("\t\t");
-// Serial.print(WindSpeed); Serial.print("\t\t");  Serial.println(" mph");
-// // wind_speed_time = millis();
-// Rotations = 0;  // Set Rotations count to 0 ready for calculations
-// // convert to mp/h using the formula V=P(2.25/T)
-// // V = P(2.25/3) = P * 0.75
-// }
-
-  /* Get a new sensor event */
-  sensors_event_t event;
-  bno.getEvent(&event);
-//This prints the BME280 vbalues to the serial port
+//This prints the BME280 values to the serial port
 printValues();
-//This prints the BME280 vbalues to the LCD
+//This prints the BME280 values to the LCD
   displayValues();
 
   delay(delayTime);
@@ -355,30 +319,37 @@ printValues();
   delay(10);
   yield();
   display.display();
-  /* The WebSerial 3D Model Viewer expects data as heading, pitch, roll */
-  Serial.print(F("Orientation: "));
-  Serial.print(360 - (float)event.orientation.x);
-  Serial.print(F(", "));
-  Serial.print((float)event.orientation.y);
-  Serial.print(F(", "));
-  Serial.print((float)event.orientation.z);
-  Serial.println(F(""));
 
 
-  uint8_t sys, gyro, accel, mag = 0;
-  bno.getCalibration(&sys, &gyro, &accel, &mag);
-  Serial.print(F("Calibration: "));
-  Serial.print(sys, DEC);
-  Serial.print(F(", "));
-  Serial.print(gyro, DEC);
-  Serial.print(F(", "));
-  Serial.print(accel, DEC);
-  Serial.print(F(", "));
-  Serial.print(mag, DEC);
-  Serial.println(F(""));
+print_heading_pitch_roll();
+  //   /* Get a new sensor event */
+  // sensors_event_t event;
+  // bno.getEvent(&event);
+  // /* The WebSerial 3D Model Viewer expects data as heading, pitch, roll */
+  // Serial.print(F("Orientation: "));
+  // Serial.print((float)event.orientation.x);
+  // Serial.print(F(", "));
+  // Serial.print((float)event.orientation.y);
+  // Serial.print(F(", "));
+  // Serial.print((float)event.orientation.z);
+  // Serial.println(F(""));
+
+
+  // uint8_t sys, gyro, accel, mag = 0;
+  // bno.getCalibration(&sys, &gyro, &accel, &mag);
+  // Serial.print(F("Calibration: "));
+  // Serial.print(sys, DEC);
+  // Serial.print(F(", "));
+  // Serial.print(gyro, DEC);
+  // Serial.print(F(", "));
+  // Serial.print(accel, DEC);
+  // Serial.print(F(", "));
+  // Serial.print(mag, DEC);
+  // Serial.println(F(""));
 
   Serial.println("\n\n");
 //  sensors_event_t event; 
+sensors_event_t event;
   bno.getEvent(&event);
   
   /* Display the floating point data */
@@ -758,6 +729,20 @@ Rotations = 0;  // Set Rotations count to 0 ready for calculations
 // V = P(2.25/3) = P * 0.75
 }
 return CalDirection;
+}
+
+void print_heading_pitch_roll() {
+      /* Get a new sensor event */
+  sensors_event_t event;
+  bno.getEvent(&event);
+  /* The WebSerial 3D Model Viewer expects data as heading, pitch, roll */
+  Serial.print(F("Heading, pitch, roll: "));
+  Serial.print((float)event.orientation.x);
+  Serial.print(F(", "));
+  Serial.print((float)event.orientation.y);
+  Serial.print(F(", "));
+  Serial.print((float)event.orientation.z);
+  Serial.println(F(""));
 }
 //removed from line 364
   // /* The WebSerial 3D Model Viewer also expects data as roll, pitch, heading */
