@@ -50,8 +50,8 @@ int VaneValue;// raw analog value from wind vane
 int Direction;// translated 0 - 360 direction
 int CalDirection;// converted value with offset applied
 int LastValue;
-uint16_t wind_speed_time_interval= 5000; //value in ms
-uint32_t wind_speed_time = 0;
+// uint16_t wind_speed_time_interval= 5000; //value in ms
+// uint32_t wind_speed_time = 0;
 uint8_t vane_pin = A0;
 uint8_t vane_switch = D5;
 uint8_t wind_pin = D6;
@@ -301,41 +301,44 @@ millisOld=millis();
 */
 /**************************************************************************/
 void loop(void) {
-//wind speed and direction
+//this enables mosfet to turn on wind speed and direction measurement.
 digitalWrite(vane_switch, HIGH);
-VaneValue = analogRead(vane_pin);
-//digitalWrite(vane_switch, LOW);
-//Serial.println("analog read value = ");
-//Serial.print(VaneValue);
-Direction = map(VaneValue, 0, 4095, 0, 360);
-CalDirection = Direction + Offset;
 
-if(CalDirection > 360)
-CalDirection = CalDirection - 360;
+float vane_wind_direction = measure_wind_direction();
 
-if(CalDirection < 0)
-CalDirection = CalDirection + 360;
+// VaneValue = analogRead(vane_pin);
+// //digitalWrite(vane_switch, LOW);
+// //Serial.println("analog read value = ");
+// //Serial.print(VaneValue);
+// Direction = map(VaneValue, 0, 4095, 0, 360);
+// CalDirection = Direction + Offset;
+
+// if(CalDirection > 360)
+// CalDirection = CalDirection - 360;
+
+// if(CalDirection < 0)
+// CalDirection = CalDirection + 360;
 
 
-//delay(100);
-if ((millis() - wind_speed_time) > wind_speed_time_interval) {
-// Only update the display if change greater than 2 degrees.
-  if(abs(CalDirection - LastValue) > 5)
-  {
-  Serial.print(VaneValue); Serial.print("\t\t");
-  Serial.print(CalDirection); Serial.print("\t\t");
-  getHeading(CalDirection);
-  LastValue = CalDirection;
-  }
-WindSpeed = Rotations * .45;
+// //delay(100);
+// if ((millis() - wind_speed_time) > wind_speed_time_interval) {
+// // Only update the display if change greater than 2 degrees.
+//   if(abs(CalDirection - LastValue) > 5)
+//   {
+//   Serial.print(VaneValue); Serial.print("\t\t");
+//   Serial.print(CalDirection); Serial.print("\t\t");
+//   getHeading(CalDirection);
+//   LastValue = CalDirection;
+//   }
+// WindSpeed = Rotations * .45;
 
-Serial.print(Rotations); Serial.print("\t\t");
-Serial.print(WindSpeed); Serial.print("\t\t");  Serial.println(" mph");
-wind_speed_time = millis();
-Rotations = 0;  // Set Rotations count to 0 ready for calculations
-// convert to mp/h using the formula V=P(2.25/T)
-// V = P(2.25/3) = P * 0.75
-}
+// Serial.print(Rotations); Serial.print("\t\t");
+// Serial.print(WindSpeed); Serial.print("\t\t");  Serial.println(" mph");
+// // wind_speed_time = millis();
+// Rotations = 0;  // Set Rotations count to 0 ready for calculations
+// // convert to mp/h using the formula V=P(2.25/T)
+// // V = P(2.25/3) = P * 0.75
+// }
 
   /* Get a new sensor event */
   sensors_event_t event;
@@ -361,20 +364,7 @@ printValues();
   Serial.print((float)event.orientation.z);
   Serial.println(F(""));
 
-  // /* The WebSerial 3D Model Viewer also expects data as roll, pitch, heading */
-  // imu::Quaternion quat = bno.getQuat();
-  
-  // Serial.print(F("Quaternion: "));
-  // Serial.print((float)quat.w());
-  // Serial.print(F(", "));
-  // Serial.print((float)quat.x());
-  // Serial.print(F(", "));
-  // Serial.print((float)quat.y());
-  // Serial.print(F(", "));
-  // Serial.print((float)quat.z());
-  // Serial.println(F(""));
 
-  /* Also send calibration data for each sensor. */
   uint8_t sys, gyro, accel, mag = 0;
   bno.getCalibration(&sys, &gyro, &accel, &mag);
   Serial.print(F("Calibration: "));
@@ -420,15 +410,6 @@ printValues();
 Serial.print("time base value =");
 Serial.print(time_base);
 Serial.print("\n");
-// uint64_t time_difference = Time.now() - time_base;
-//   if(time_difference > time_counter ){
-//       SystemSleepConfiguration config;
-// config.mode(SystemSleepMode::STOP)
-//       .gpio(WKP, RISING)
-//       .duration(15min);
-//     System.sleep(config);
-//         time_base = Time.now();
-//   }
   
   Serial.print("\n");
   Particle.publish("office temperature", String(bme.readTemperature()*1.8F + 32.));
@@ -542,9 +523,6 @@ void displayValues() {
     display.print(bme.readHumidity());
     display.println(" %");
 
-    Serial.println();
-    display.println("Marrie is great!");
-    Serial.println();
     display.print("Compass heading");
     display.print(compass_heading);
   display.display(); // actually display all of the above
@@ -710,7 +688,7 @@ void eeprom_test(){
 int test = 55;
       // Try to determine the size by writing a value and seeing if it changes the first byte
   Serial.println("Testing size!");
-  for (max_addr = 1; max_addr < 0xFFFF; max_addr++) {
+  for (max_addr = 1; max_addr < 0x7FFF; max_addr++) {
     if (i2ceeprom.read(max_addr) != test)
       continue; // def didnt wrap around yet
 
@@ -739,3 +717,60 @@ int test = 55;
   Serial.print(max_addr);
   Serial.println(" bytes");
 }
+
+float measure_wind_direction(){
+uint16_t wind_speed_time_interval= 5000; //value in ms
+uint32_t wind_speed_time = 0;
+VaneValue = analogRead(vane_pin);
+//digitalWrite(vane_switch, LOW);
+//Serial.println("analog read value = ");
+//Serial.print(VaneValue);
+Direction = map(VaneValue, 0, 4095, 0, 360);
+CalDirection = Direction + Offset;
+
+if(CalDirection > 360)
+CalDirection = CalDirection - 360;
+
+if(CalDirection < 0)
+CalDirection = CalDirection + 360;
+
+
+//delay(100);
+if ((millis() - wind_speed_time) > wind_speed_time_interval) {
+// Only update the display if change greater than 2 degrees.
+  if(abs(CalDirection - LastValue) > 5)
+  {
+    Serial.print("Vanevalue -----------------\n");
+  Serial.print(VaneValue); Serial.print("\t\t");
+  Serial.print(CalDirection); Serial.print("\t\t");
+  getHeading(CalDirection);
+  LastValue = CalDirection;
+  }
+  wind_speed_time = millis();
+  
+  WindSpeed = Rotations * .45;
+Serial.print("wind speed -----------------\n");
+Serial.print(Rotations); Serial.print("\t\t");
+Serial.print(WindSpeed); Serial.print("\t\t");  Serial.println(" mph");
+// wind_speed_time = millis();
+Rotations = 0;  // Set Rotations count to 0 ready for calculations
+// convert to mp/h using the formula V=P(2.25/T)
+// V = P(2.25/3) = P * 0.75
+}
+return CalDirection;
+}
+//removed from line 364
+  // /* The WebSerial 3D Model Viewer also expects data as roll, pitch, heading */
+  // imu::Quaternion quat = bno.getQuat();
+  
+  // Serial.print(F("Quaternion: "));
+  // Serial.print((float)quat.w());
+  // Serial.print(F(", "));
+  // Serial.print((float)quat.x());
+  // Serial.print(F(", "));
+  // Serial.print((float)quat.y());
+  // Serial.print(F(", "));
+  // Serial.print((float)quat.z());
+  // Serial.println(F(""));
+
+  /* Also send calibration data for each sensor. */
