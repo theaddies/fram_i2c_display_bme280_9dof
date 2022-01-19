@@ -9,6 +9,7 @@
 #include <Adafruit_BNO055.h>
 #include <imumaths.h>
 #include <SPI.h>
+#include <Adafruit_INA219.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SH110X.h>
 #include <Adafruit_BME280.h>
@@ -28,11 +29,14 @@ void getHeading(int direction);
 void isr_rotation ();
 float get_compass_heading();
 void eeprom_test();
-float measure_wind_direction();
+float measure_wind_direction(float& WindSpeed);
 void print_heading_pitch_roll();
-#line 13 "z:/Personal/Electronics/particle/fram_i2c_display_bme280_9dof/src/fram_i2c_display_bme280_9dof.ino"
+void current_power_voltage();
+#line 14 "z:/Personal/Electronics/particle/fram_i2c_display_bme280_9dof/src/fram_i2c_display_bme280_9dof.ino"
 Adafruit_EEPROM_I2C i2ceeprom;
 //Adafruit_FRAM_I2C i2ceeprom;
+
+Adafruit_INA219 ina219;
 
 #define EEPROM_ADDR 0x50  // the default address for the I2C FRAM eeprom
 
@@ -67,10 +71,10 @@ Adafruit_BNO055 bno = Adafruit_BNO055(55, 0x28);
     Wind speed and direction variables
 */
 /**************************************************************************/
-int VaneValue;// raw analog value from wind vane
-int Direction;// translated 0 - 360 direction
-int CalDirection;// converted value with offset applied
-int LastValue;
+// int VaneValue;// raw analog value from wind vane
+// int Direction;// translated 0 - 360 direction
+// int CalDirection;// converted value with offset applied
+// int LastValue;
 // uint16_t wind_speed_time_interval= 5000; //value in ms
 // uint32_t wind_speed_time = 0;
 uint8_t vane_pin = A0;
@@ -110,13 +114,33 @@ int64_t time_counter  = 60;
 */
 /**************************************************************************/
 void setup(void) {
+
+    uint32_t currentFrequency;
+
+  
+    
+  Serial.println("Hello!");
+  
+  // Initialize the INA219.
+  // By default the initialization will use the largest range (32V, 2A).  However
+  // you can call a setCalibration function to change this range (see comments).
+  if (! ina219.begin()) {
+    Serial.println("Failed to find INA219 chip");
+    while (1) { delay(10); }
+  }
+  // To use a slightly lower 32V, 1A range (higher precision on amps):
+  //ina219.setCalibration_32V_1A();
+  // Or to use a lower 16V, 400mA range (higher precision on volts and amps):
+  ina219.setCalibration_16V_400mA();
+
+
 time_base = Time.now();
 Serial.print("time base value =");
 Serial.print(time_base);
 Serial.print("\n");
 
 //wind speed and direction setup
-LastValue = 1;
+//LastValue = 1;
 
 pinMode(vane_pin, INPUT);
 pinMode(vane_switch, OUTPUT);
@@ -325,13 +349,19 @@ void loop(void) {
 //this enables mosfet to turn on wind speed and direction measurement.
 digitalWrite(vane_switch, HIGH);
 
-float vane_wind_direction = measure_wind_direction();
-
+float vane_wind_direction = measure_wind_direction(WindSpeed);
+Serial.print("\n");
+Serial.print("wind direction = ");
+Serial.print(vane_wind_direction);
+Serial.print("\n");
+Serial.print("wind speed = ");
+Serial.print(WindSpeed);
+Serial.print("\n");
 
 //This prints the BME280 values to the serial port
 printValues();
 //This prints the BME280 values to the LCD
-  displayValues();
+displayValues();
 
   delay(delayTime);
   if(!digitalRead(BUTTON_A)) display.print("A");
@@ -384,7 +414,7 @@ sensors_event_t event;
 
   Serial.println("\n\n");
 
-  compass_heading = event.orientation.x +285;
+  compass_heading = event.orientation.x + 104;
 
   if(compass_heading > 360) {
     compass_heading = compass_heading - 360;
@@ -410,6 +440,8 @@ Serial.print("\n");
       adafruit_bno055_offsets_t newCalib;
     bno.getSensorOffsets(newCalib);
     displaySensorOffsets(newCalib);
+
+  current_power_voltage();
 
       delay(BNO055_SAMPLERATE_DELAY_MS);
 }
@@ -590,8 +622,8 @@ Serial.println("N");
 
 // This is the function that the interrupt calls to increment the rotation count
 void isr_rotation () {
-
-if ((millis() - ContactBounceTime) > 15 ) { // debounce the switch contact.
+//a debounce time of 22 ms is equivalent to wind of 100 mph.
+if ((millis() - ContactBounceTime) > 22 ) { // debounce the switch contact.
 Rotations++;
 ContactBounceTime = millis();
 }
@@ -669,7 +701,10 @@ Serial.println(psi);
  
 phiFold=phiFnew;
 thetaFold=thetaFnew;
- 
+ psi += 180;
+ if(psi >= 360) {
+   psi = psi -360;
+ }
  return(psi);
 //delay(BNO055_SAMPLERATE_DELAY_MS);
 }
@@ -710,7 +745,11 @@ int test = 55;
   Serial.println(" bytes");
 }
 
-float measure_wind_direction(){
+float measure_wind_direction(float& WindSpeed){
+int VaneValue;// raw analog value from wind vane
+int Direction;// translated 0 - 360 direction
+int CalDirection;// converted value with offset applied
+int LastValue = 0;
 uint16_t wind_speed_time_interval= 5000; //value in ms
 uint32_t wind_speed_time = 0;
 VaneValue = analogRead(vane_pin);
@@ -730,14 +769,6 @@ CalDirection = CalDirection + 360;
 //delay(100);
 if ((millis() - wind_speed_time) > wind_speed_time_interval) {
 // Only update the display if change greater than 2 degrees.
-  if(abs(CalDirection - LastValue) > 5)
-  {
-    Serial.print("Vanevalue -----------------\n");
-  Serial.print(VaneValue); Serial.print("\t\t");
-  Serial.print(CalDirection); Serial.print("\t\t");
-  getHeading(CalDirection);
-  LastValue = CalDirection;
-  }
   wind_speed_time = millis();
   
   WindSpeed = Rotations * .45;
@@ -746,9 +777,18 @@ Serial.print(Rotations); Serial.print("\t\t");
 Serial.print(WindSpeed); Serial.print("\t\t");  Serial.println(" mph");
 // wind_speed_time = millis();
 Rotations = 0;  // Set Rotations count to 0 ready for calculations
-// convert to mp/h using the formula V=P(2.25/T)
+// convert to mph using the formula V=P(2.25/T)
 // V = P(2.25/3) = P * 0.75
 }
+  if(abs(CalDirection - LastValue) > 5)
+  {
+    Serial.print("Vanevalue -----------------\n");
+  Serial.print(VaneValue); Serial.print("\t\t");
+  Serial.print(CalDirection); Serial.print("\t\t");
+  getHeading(CalDirection);
+  LastValue = CalDirection;
+  }
+
 return CalDirection;
 }
 
@@ -764,6 +804,27 @@ void print_heading_pitch_roll() {
   Serial.print(F(", "));
   Serial.print((float)event.orientation.z);
   Serial.println(F(""));
+}
+
+void current_power_voltage(){
+   float shuntvoltage = 0;
+  float busvoltage = 0;
+  float current_mA = 0;
+  float loadvoltage = 0;
+  float power_mW = 0;
+
+  shuntvoltage = ina219.getShuntVoltage_mV();
+  busvoltage = ina219.getBusVoltage_V();
+  current_mA = ina219.getCurrent_mA();
+  power_mW = ina219.getPower_mW();
+  loadvoltage = busvoltage + (shuntvoltage / 1000);
+  
+  Serial.print("Bus Voltage:   "); Serial.print(busvoltage); Serial.println(" V");
+  Serial.print("Shunt Voltage: "); Serial.print(shuntvoltage); Serial.println(" mV");
+  Serial.print("Load Voltage:  "); Serial.print(loadvoltage); Serial.println(" V");
+  Serial.print("Current:       "); Serial.print(current_mA); Serial.println(" mA");
+  Serial.print("Power:         "); Serial.print(power_mW); Serial.println(" mW");
+  Serial.println("");
 }
 //removed from line 364
   // /* The WebSerial 3D Model Viewer also expects data as roll, pitch, heading */
