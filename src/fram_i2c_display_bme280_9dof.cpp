@@ -32,6 +32,7 @@ void eeprom_test();
 float measure_wind_direction(float& WindSpeed);
 void print_heading_pitch_roll();
 void current_power_voltage();
+float get_event_compass_heading();
 #line 14 "z:/Personal/Electronics/particle/fram_i2c_display_bme280_9dof/src/fram_i2c_display_bme280_9dof.ino"
 Adafruit_EEPROM_I2C i2ceeprom;
 //Adafruit_FRAM_I2C i2ceeprom;
@@ -59,7 +60,7 @@ Adafruit_SH1107 display = Adafruit_SH1107(64, 128, &Wire);
 float compass_heading;
 
 /* Set the delay between fresh samples */
-#define BNO055_STARTUP_SAMPLE_DELAY_MS (1000)
+#define BNO055_STARTUP_SAMPLE_DELAY_MS (100)
 #define BNO055_SAMPLERATE_DELAY_MS (10000)
 
 // Check I2C device address and correct line below (by default address is 0x29 or 0x28)
@@ -105,6 +106,7 @@ float Ym;
 float psi;
 float dt;
 float bno_compass_heading;
+float event_compass_heading;
 unsigned long millisOld;
 int64_t time_base = 0;
 int64_t time_counter  = 60;
@@ -117,8 +119,6 @@ void setup(void) {
 
     uint32_t currentFrequency;
 
-  
-    
   Serial.println("Hello!");
   
   // Initialize the INA219.
@@ -372,7 +372,7 @@ displayValues();
   display.display();
 
 
-print_heading_pitch_roll();
+//print_heading_pitch_roll();
   //   /* Get a new sensor event */
   // sensors_event_t event;
   // bno.getEvent(&event);
@@ -400,28 +400,30 @@ print_heading_pitch_roll();
 
   Serial.println("\n\n");
 //  sensors_event_t event; 
-sensors_event_t event;
-  bno.getEvent(&event);
+
+event_compass_heading = get_event_compass_heading();
+// sensors_event_t event;
+//   bno.getEvent(&event);
   
-  /* Display the floating point data */
-  Serial.print("X: ");
-  Serial.print(event.orientation.x, 4);
-  Serial.print("\tY: ");
-  Serial.print(event.orientation.y, 4);
-  Serial.print("\tZ: ");
-  Serial.print(event.orientation.z, 4);
-  Serial.println("");
+//   /* Display the floating point data */
+//   Serial.print("X: ");
+//   Serial.print(event.orientation.x, 4);
+//   Serial.print("\tY: ");
+//   Serial.print(event.orientation.y, 4);
+//   Serial.print("\tZ: ");
+//   Serial.print(event.orientation.z, 4);
+//   Serial.println("");
 
-  Serial.println("\n\n");
+//   Serial.println("\n\n");
 
-  compass_heading = event.orientation.x + 104;
+//   compass_heading = event.orientation.x + 104;
 
-  if(compass_heading > 360) {
-    compass_heading = compass_heading - 360;
-  }
+//   if(compass_heading > 360) {
+//     compass_heading = compass_heading - 360;
+//   }
   
-  Serial.print("compass heading:  ");
-  Serial.print(compass_heading, 4);
+//   Serial.print("compass heading:  ");
+//   Serial.print(compass_heading, 4);
 
   bno_compass_heading = get_compass_heading();
 
@@ -437,9 +439,9 @@ Serial.print("\n");
   Particle.publish("office temperature", String(bme.readTemperature()*1.8F + 32.));
 
 
-      adafruit_bno055_offsets_t newCalib;
-    bno.getSensorOffsets(newCalib);
-    displaySensorOffsets(newCalib);
+    //   adafruit_bno055_offsets_t newCalib;
+    // bno.getSensorOffsets(newCalib);
+    // displaySensorOffsets(newCalib);
 
   current_power_voltage();
 
@@ -667,37 +669,37 @@ Ym=mag.y()*cos(phiRad)+mag.z()*sin(phiRad);
  //compass heading
 psi=atan2(Ym,Xm)/(2*3.14)*360;
  
-Serial.print(acc.x()/9.8);
-Serial.print(",");
-Serial.print(acc.y()/9.8);
-Serial.print(",");
-Serial.print(acc.z()/9.8);
-Serial.print(",");
-Serial.print(accel);
-Serial.print(",");
-Serial.print(gyro);
-Serial.print(",");
-Serial.print(mg);
-Serial.print(",");
-Serial.print(system);
-Serial.print(",");
-Serial.print(thetaM);
-Serial.print(",");
-Serial.print(phiM);
-Serial.print(",");
-Serial.print(thetaFnew);
-Serial.print(",");
-Serial.print(phiFnew);
-Serial.print(",");
-Serial.print(thetaG);
-Serial.print(",");
-Serial.print(phiG);
-Serial.print(",");
-Serial.print(theta);
-Serial.print(",");
-Serial.print(phi);
-Serial.print(",");
-Serial.println(psi);
+// Serial.print(acc.x()/9.8);
+// Serial.print(",");
+// Serial.print(acc.y()/9.8);
+// Serial.print(",");
+// Serial.print(acc.z()/9.8);
+// Serial.print(",");
+// Serial.print(accel);
+// Serial.print(",");
+// Serial.print(gyro);
+// Serial.print(",");
+// Serial.print(mg);
+// Serial.print(",");
+// Serial.print(system);
+// Serial.print(",");
+// Serial.print(thetaM);
+// Serial.print(",");
+// Serial.print(phiM);
+// Serial.print(",");
+// Serial.print(thetaFnew);
+// Serial.print(",");
+// Serial.print(phiFnew);
+// Serial.print(",");
+// Serial.print(thetaG);
+// Serial.print(",");
+// Serial.print(phiG);
+// Serial.print(",");
+// Serial.print(theta);
+// Serial.print(",");
+// Serial.print(phi);
+// Serial.print(",");
+// Serial.println(psi);
  
 phiFold=phiFnew;
 thetaFold=thetaFnew;
@@ -826,6 +828,34 @@ void current_power_voltage(){
   Serial.print("Power:         "); Serial.print(power_mW); Serial.println(" mW");
   Serial.println("");
 }
+
+float get_event_compass_heading(){
+sensors_event_t event;
+  bno.getEvent(&event);
+  
+  /* Display the floating point data */
+  Serial.print("X: ");
+  Serial.print(event.orientation.x, 4);
+  Serial.print("\tY: ");
+  Serial.print(event.orientation.y, 4);
+  Serial.print("\tZ: ");
+  Serial.print(event.orientation.z, 4);
+  Serial.println("");
+
+  Serial.println("\n\n");
+
+  compass_heading = event.orientation.x + 104;
+
+  if(compass_heading > 360) {
+    compass_heading = compass_heading - 360;
+  }
+  
+  Serial.print("compass heading:  ");
+  Serial.print(compass_heading, 4);
+  return compass_heading;
+}
+
+
 //removed from line 364
   // /* The WebSerial 3D Model Viewer also expects data as roll, pitch, heading */
   // imu::Quaternion quat = bno.getQuat();
