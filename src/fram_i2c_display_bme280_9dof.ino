@@ -60,8 +60,19 @@ uint8_t vane_switch = D5;
 uint8_t wind_pin = D6;
 volatile unsigned long Rotations = 0; // cup rotation counter used in interrupt routine
 volatile unsigned long ContactBounceTime; // Timer to avoid contact bounce in interrupt routine
+String heading;
 
 float WindSpeed; // speed miles per hour
+int vane_wind_direction;
+float bme_temperature;
+float bme_pressure;
+float bme_humidity;
+float bme_altitude;
+   float shuntvoltage = 0;
+  float busvoltage = 0;
+  float current_mA = 0;
+  float loadvoltage = 0;
+  float power_mW = 0;
 
 #define Offset 0;
 //**********************************
@@ -326,19 +337,13 @@ void loop(void) {
 //this enables mosfet to turn on wind speed and direction measurement.
 digitalWrite(vane_switch, HIGH);
 
-float vane_wind_direction = measure_wind_direction(WindSpeed);
-Serial.print("\n");
-Serial.print("wind direction = ");
-Serial.print(vane_wind_direction);
-Serial.print("\n");
-Serial.print("wind speed = ");
-Serial.print(WindSpeed);
-Serial.print("\n");
+vane_wind_direction = measure_wind_direction();
 
-//This prints the BME280 values to the serial port
-printValues();
-//This prints the BME280 values to the LCD
-displayValues();
+WindSpeed = measure_wind_speed();
+
+read_bme_values(bme_temperature, bme_pressure, bme_humidity, bme_altitude);
+
+
 
   delay(delayTime);
   if(!digitalRead(BUTTON_A)) display.print("A");
@@ -348,79 +353,26 @@ displayValues();
   yield();
   display.display();
 
-
-//print_heading_pitch_roll();
-  //   /* Get a new sensor event */
-  // sensors_event_t event;
-  // bno.getEvent(&event);
-  // /* The WebSerial 3D Model Viewer expects data as heading, pitch, roll */
-  // Serial.print(F("Orientation: "));
-  // Serial.print((float)event.orientation.x);
-  // Serial.print(F(", "));
-  // Serial.print((float)event.orientation.y);
-  // Serial.print(F(", "));
-  // Serial.print((float)event.orientation.z);
-  // Serial.println(F(""));
-
-
-  // uint8_t sys, gyro, accel, mag = 0;
-  // bno.getCalibration(&sys, &gyro, &accel, &mag);
-  // Serial.print(F("Calibration: "));
-  // Serial.print(sys, DEC);
-  // Serial.print(F(", "));
-  // Serial.print(gyro, DEC);
-  // Serial.print(F(", "));
-  // Serial.print(accel, DEC);
-  // Serial.print(F(", "));
-  // Serial.print(mag, DEC);
-  // Serial.println(F(""));
-
-  Serial.println("\n\n");
-//  sensors_event_t event; 
-
 event_compass_heading = get_event_compass_heading();
-// sensors_event_t event;
-//   bno.getEvent(&event);
-  
-//   /* Display the floating point data */
-//   Serial.print("X: ");
-//   Serial.print(event.orientation.x, 4);
-//   Serial.print("\tY: ");
-//   Serial.print(event.orientation.y, 4);
-//   Serial.print("\tZ: ");
-//   Serial.print(event.orientation.z, 4);
-//   Serial.println("");
-
-//   Serial.println("\n\n");
-
-//   compass_heading = event.orientation.x + 104;
-
-//   if(compass_heading > 360) {
-//     compass_heading = compass_heading - 360;
-//   }
-  
-//   Serial.print("compass heading:  ");
-//   Serial.print(compass_heading, 4);
 
   bno_compass_heading = get_compass_heading();
 
-  Serial.print("psi from bno055\n");
-  Serial.print(bno_compass_heading);
-  Serial.print("\nunix time = ");
-  Serial.print(Time.now());
-Serial.print("time base value =");
-Serial.print(time_base);
-Serial.print("\n");
-  
-  Serial.print("\n");
-  Particle.publish("office temperature", String(bme.readTemperature()*1.8F + 32.));
+  heading = calculateHeading(int((event_compass_heading + bno_compass_heading) / 2));
+
+  measure_current_voltage_power(shuntvoltage, busvoltage,current_mA, loadvoltage, power_mW );
+
+  displayValues(bme_temperature, bme_pressure, bme_humidity, bme_altitude, vane_wind_direction, WindSpeed, heading);
+
+  //print_current_voltage_power(shuntvoltage, busvoltage,current_mA, loadvoltage, power_mW );
+
+  //Particle.publish("office temperature", String(bme_temperature));
 
 
     //   adafruit_bno055_offsets_t newCalib;
     // bno.getSensorOffsets(newCalib);
     // displaySensorOffsets(newCalib);
 
-  current_power_voltage();
+
 
       delay(BNO055_SAMPLERATE_DELAY_MS);
 }
@@ -482,52 +434,71 @@ void displayCalStatus(void)
     Serial.print(mag, DEC);
 }
 
-void printValues() {
+void read_bme_values(float& bme_temperature, float& bme_pressure, float& bme_humidity, float& bme_altitude){
+bme_temperature = bme.readTemperature()*1.8F + 32.;
+bme_pressure = bme.readPressure() / 101325.0F * 760.0F;
+bme_humidity = bme.readHumidity();
+bme_altitude = bme.readAltitude(SEALEVELPRESSURE_HPA);
+}
+
+void printValues(float& bme_temperature, float& bme_pressure, float& bme_humidity, float& bme_altitude) {
     Serial.print("\n\nTemperature = ");
-    Serial.print(bme.readTemperature()*1.8F + 32.);
+    Serial.print(bme_temperature);
     Serial.println(" F");
 
     Serial.print("Pressure = ");
 
-    Serial.print(bme.readPressure() / 101325.0F * 760.0F);
+    Serial.print(bme_pressure);
     Serial.println(" mmHg");
 
     Serial.print("Approx. Altitude = ");
-    Serial.print(bme.readAltitude(SEALEVELPRESSURE_HPA));
+    Serial.print(bme_altitude);
     Serial.println(" m");
 
     Serial.print("Humidity = ");
 
-    Serial.print(bme.readHumidity());
+    Serial.print(bme_humidity);
     Serial.println(" %");
 
     Serial.println();
 }
 
-void displayValues() {
+void displayValues(float& bme_temperature, float& bme_pressure, float& bme_humidity, float& bme_altitude, int& vane_wind_direction, float& WindSpeed, String& heading) {
     display.clearDisplay();
   display.display();
   display.setCursor(0,0);
     display.print("Temp. = ");
-    display.print(bme.readTemperature()*1.8F + 32.);
-    display.println(" °F");
+    display.print(bme_temperature);
+    display.println(" F");
 
     display.print("Press. = ");
 
-    display.print(bme.readPressure() / 101325.0F * 760.0F);
+    display.print(bme_pressure);
     display.println(" mmHg");
 
     display.print("Altitude = ");
-    display.print(bme.readAltitude(SEALEVELPRESSURE_HPA));
+    display.print(bme_altitude);
     display.println(" m");
 
     display.print("Humidity = ");
 
-    display.print(bme.readHumidity());
+    display.print(bme_humidity);
     display.println(" %");
 
-    display.print("Compass heading");
+    display.print("Com head = ");
     display.print(compass_heading);
+    display.println(" d");
+
+    display.print("Wind dir = ");
+    display.println(vane_wind_direction);
+
+    display.print("Wind speed = ");
+    display.print(WindSpeed);
+    display.println(" mph");
+
+display.print("heading = ");
+display.print(heading);
+
   display.display(); // actually display all of the above
   }
   
@@ -577,27 +548,7 @@ void displaySensorOffsets(const adafruit_bno055_offsets_t &calibData)
     Serial.print("\nMag Radius: ");
     Serial.print(calibData.mag_radius);
 }
-// Converts compass direction to heading
-void getHeading(int direction) {
-if(direction < 22)
-Serial.println("N");
-else if (direction < 67)
-Serial.println("NE");
-else if (direction < 112)
-Serial.println("E");
-else if (direction < 157)
-Serial.println("SE");
-else if (direction < 212)
-Serial.println("S");
-else if (direction < 247)
-Serial.println("SW");
-else if (direction < 292)
-Serial.println("W");
-else if (direction < 337)
-Serial.println("NW");
-else
-Serial.println("N");
-} 
+
 
 // This is the function that the interrupt calls to increment the rotation count
 void isr_rotation () {
@@ -724,13 +675,26 @@ int test = 55;
   Serial.println(" bytes");
 }
 
-float measure_wind_direction(float& WindSpeed){
+float measure_wind_speed() {
+uint16_t wind_speed_time_interval= 60000; //value in ms
+uint32_t wind_speed_time = 0;
+float WindSpeed = 0;
+if ((millis() - wind_speed_time) > wind_speed_time_interval) {
+// Only update the display if change greater than 2 degrees.
+  wind_speed_time = millis();
+  WindSpeed = Rotations * 0.0375;
+Rotations = 0;  // Set Rotations count to 0 ready for calculations
+// convert to mph using the formula V=P(2.25/T)
+// V = P(2.25/3) = P * 0.75
+}
+return WindSpeed;
+}
+
+int measure_wind_direction(){
 int VaneValue;// raw analog value from wind vane
 int Direction;// translated 0 - 360 direction
 int CalDirection;// converted value with offset applied
-int LastValue = 0;
-uint16_t wind_speed_time_interval= 5000; //value in ms
-uint32_t wind_speed_time = 0;
+//int LastValue = 0;
 VaneValue = analogRead(vane_pin);
 //digitalWrite(vane_switch, LOW);
 //Serial.println("analog read value = ");
@@ -744,32 +708,65 @@ CalDirection = CalDirection - 360;
 if(CalDirection < 0)
 CalDirection = CalDirection + 360;
 
-
 //delay(100);
-if ((millis() - wind_speed_time) > wind_speed_time_interval) {
-// Only update the display if change greater than 2 degrees.
-  wind_speed_time = millis();
-  
-  WindSpeed = Rotations * .45;
-Serial.print("wind speed -----------------\n");
-Serial.print(Rotations); Serial.print("\t\t");
-Serial.print(WindSpeed); Serial.print("\t\t");  Serial.println(" mph");
-// wind_speed_time = millis();
-Rotations = 0;  // Set Rotations count to 0 ready for calculations
-// convert to mph using the formula V=P(2.25/T)
-// V = P(2.25/3) = P * 0.75
-}
-  if(abs(CalDirection - LastValue) > 5)
-  {
-    Serial.print("Vanevalue -----------------\n");
-  Serial.print(VaneValue); Serial.print("\t\t");
-  Serial.print(CalDirection); Serial.print("\t\t");
-  getHeading(CalDirection);
-  LastValue = CalDirection;
-  }
+
+  // if(abs(CalDirection - LastValue) > 5)
+  // {
+  //   Serial.print("Vanevalue -----------------\n");
+  // Serial.print(VaneValue); Serial.print("\t\t");
+  // Serial.print(CalDirection); Serial.print("\t\t");
+  // getHeading(CalDirection);
+  // LastValue = CalDirection;
+  // }
 
 return CalDirection;
 }
+
+// Converts compass direction to heading
+void printHeading(int direction) {
+if(direction < 22)
+Serial.println("N");
+else if (direction < 67)
+Serial.println("NE");
+else if (direction < 112)
+Serial.println("E");
+else if (direction < 157)
+Serial.println("SE");
+else if (direction < 212)
+Serial.println("S");
+else if (direction < 247)
+Serial.println("SW");
+else if (direction < 292)
+Serial.println("W");
+else if (direction < 337)
+Serial.println("NW");
+else
+Serial.println("N");
+} 
+
+String calculateHeading(int direction) {
+  String heading = "xx";
+if(direction < 22)
+heading = "N";
+else if (direction < 67)
+heading = "NE";
+else if (direction < 112)
+heading = "E";
+else if (direction < 157)
+heading = "SE";
+else if (direction < 212)
+heading = "S";
+else if (direction < 247)
+heading = "SW";
+else if (direction < 292)
+heading = "W";
+else if (direction < 337)
+heading = "NW";
+else
+heading = "N";
+
+return heading;
+} 
 
 void print_heading_pitch_roll() {
       /* Get a new sensor event */
@@ -785,18 +782,19 @@ void print_heading_pitch_roll() {
   Serial.println(F(""));
 }
 
-void current_power_voltage(){
-   float shuntvoltage = 0;
-  float busvoltage = 0;
-  float current_mA = 0;
-  float loadvoltage = 0;
-  float power_mW = 0;
+void measure_current_voltage_power(float& shuntvoltage, float& busvoltage, float& current_mA, float& loadvoltage, float& power_mW){
+
 
   shuntvoltage = ina219.getShuntVoltage_mV();
   busvoltage = ina219.getBusVoltage_V();
   current_mA = ina219.getCurrent_mA();
   power_mW = ina219.getPower_mW();
   loadvoltage = busvoltage + (shuntvoltage / 1000);
+
+}
+
+void print_current_voltage_power(float& shuntvoltage, float& busvoltage, float& current_mA, float& loadvoltage, float& power_mW){
+
   
   Serial.print("Bus Voltage:   "); Serial.print(busvoltage); Serial.println(" V");
   Serial.print("Shunt Voltage: "); Serial.print(shuntvoltage); Serial.println(" mV");
@@ -805,6 +803,7 @@ void current_power_voltage(){
   Serial.print("Power:         "); Serial.print(power_mW); Serial.println(" mW");
   Serial.println("");
 }
+
 
 float get_event_compass_heading(){
 sensors_event_t event;
