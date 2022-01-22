@@ -23,14 +23,13 @@ void displaySensorStatus(void);
 void displayCalStatus(void);
 void read_bme_values(float& bme_temperature, float& bme_pressure, float& bme_humidity, float& bme_altitude);
 void printValues(float& bme_temperature, float& bme_pressure, float& bme_humidity, float& bme_altitude);
-void displayValues1(float& bme_temperature, float& bme_pressure, float& bme_humidity, float& bme_altitude, float& shuntvoltage, float& busvoltage, float& current_mA, float& power_mW);
-void displayValues2(float& event_compass_heading, float& bno_compass_heading, int& vane_wind_direction, String& heading  , float& WindSpeed);
+void displayValues1(int32_t bme_temperature_average, int32_t bme_pressure_average, int32_t bme_humidity_average, int32_t bme_altitude_average, int32_t busvoltage_average, int32_t current_mA_average, int32_t power_mW_average);
+void displayValues2(int32_t vane_wind_direction_average, String& heading  , float& WindSpeed);
 void displaySensorDetails(void);
 void displaySensorOffsets(const adafruit_bno055_offsets_t &calibData);
 void isr_rotation ();
 float get_compass_heading();
 void eeprom_test();
-float measure_wind_speed();
 int measure_wind_direction();
 void printHeading(int direction);
 String calculateHeading(int direction);
@@ -66,7 +65,7 @@ float compass_heading;
 
 /* Set the delay between fresh samples */
 #define BNO055_STARTUP_SAMPLE_DELAY_MS (100)
-#define BNO055_SAMPLERATE_DELAY_MS (2000)
+#define BNO055_SAMPLERATE_DELAY_MS (200)
 
 // Check I2C device address and correct line below (by default address is 0x29 or 0x28)
 //                                   id, address
@@ -103,6 +102,34 @@ float bme_altitude;
   float current_mA = 0;
   float loadvoltage = 0;
   float power_mW = 0;
+  uint16_t average_time_interval= 10000; //value in ms
+    uint16_t change_display_time_interval= 2000; //value in ms
+    uint32_t time_from_last_display = 0;
+uint32_t timeFromLastReading = 0;
+uint16_t loop_counter = 0;
+
+uint32_t bme_temperature_total;
+uint32_t bme_pressure_total;
+uint32_t bme_humidity_total;
+uint32_t bme_altitude_total;
+uint32_t busvoltage_total;
+uint32_t current_mA_total;
+uint32_t power_mW_total;
+uint32_t vane_wind_direction_total;
+uint32_t heading_total;
+uint32_t event_compass_heading_total;
+uint32_t bno_compass_heading_total;
+
+uint32_t bme_temperature_average;
+uint32_t bme_pressure_average;
+uint32_t bme_humidity_average;
+uint32_t bme_altitude_average;
+uint32_t busvoltage_average;
+uint32_t current_mA_average;
+uint32_t power_mW_average;
+uint32_t vane_wind_direction_average;
+uint32_t event_compass_heading_average;
+uint32_t bno_compass_heading_average;
 
 #define Offset 0;
 //**********************************
@@ -370,44 +397,109 @@ millisOld=millis();
 */
 /**************************************************************************/
 void loop(void) {
+  int count = 0;
 //this enables mosfet to turn on wind speed and direction measurement.
 digitalWrite(vane_switch, HIGH);
 
 vane_wind_direction = measure_wind_direction();
 
-WindSpeed = measure_wind_speed();
+//WindSpeed = measure_wind_speed();
 
 read_bme_values(bme_temperature, bme_pressure, bme_humidity, bme_altitude);
 
+printValues(bme_temperature, bme_pressure, bme_humidity, bme_altitude);
 
 
-  delay(delayTime);
-  if(!digitalRead(BUTTON_A)) display.print("A");
-  if(!digitalRead(BUTTON_B)) display.print("B");
-  if(!digitalRead(BUTTON_C)) display.print("C");
-  delay(10);
-  yield();
-  display.display();
+
+  // delay(delayTime);
+  // if(!digitalRead(BUTTON_A)) display.print("A");
+  // if(!digitalRead(BUTTON_B)) display.print("B");
+  // if(!digitalRead(BUTTON_C)) display.print("C");
+  // delay(10);
+  // yield();
+  // display.display();
 
 event_compass_heading = get_event_compass_heading();
 
   bno_compass_heading = get_compass_heading();
 
-  //calibrated_vane_direction = 
-
-  heading = calculateHeading(int((event_compass_heading + bno_compass_heading) / 2));
-
   measure_current_voltage_power(shuntvoltage, busvoltage,current_mA, loadvoltage, power_mW );
 
+bme_temperature_total = bme_temperature_total + (int) bme_temperature;
+bme_pressure_total = bme_pressure_total + (int) bme_pressure;
+bme_humidity_total = bme_humidity_total + (int) bme_humidity;
+bme_altitude_total = bme_altitude_total + (int) bme_altitude;
+busvoltage_total = busvoltage_total + (int) busvoltage;
+current_mA_total = current_mA_total + (int) current_mA;
+power_mW_total = power_mW_total + (int) power_mW;
+vane_wind_direction_total = vane_wind_direction_total + (int) vane_wind_direction;
+event_compass_heading_total = event_compass_heading_total + (int) event_compass_heading;
+bno_compass_heading_total = bno_compass_heading_total + (int) bno_compass_heading;
+
+if ((millis() - timeFromLastReading) > average_time_interval) {
+
+  WindSpeed = (float) Rotations * 2.25 / (float) (millis() - timeFromLastReading) * 1000.;
+  bme_temperature_average = bme_temperature_total / loop_counter;
+  bme_pressure_average = bme_pressure_total / loop_counter;
+  bme_humidity_average = bme_humidity_total / loop_counter;
+  bme_altitude_average = bme_altitude_total / loop_counter;
+  busvoltage_average = busvoltage_total / loop_counter;
+  current_mA_average = current_mA_total / loop_counter;
+  power_mW_average = power_mW_total / loop_counter;
+  vane_wind_direction_average = vane_wind_direction_total / loop_counter;
+  event_compass_heading_average = event_compass_heading_total / loop_counter;
+  bno_compass_heading_average = bno_compass_heading_total / loop_counter;
+  timeFromLastReading = millis();
+  
+  Serial.print("rotations = ");
+  Serial.print(Rotations);
+  Serial.print("\n");
+  Serial.print("\nBME altitude total = ");
+  Serial.print(bme_altitude_total);
+  Serial.print("\t");
+  Serial.print("\nBME temp total = ");
+  Serial.print(bme_temperature_total);
+  Serial.print("\t");
+  Serial.print("loop counter = ");
+  Serial.print(loop_counter);
+  Serial.print("\n");
+  Serial.print("\nBME temp average = ");
+  Serial.print(bme_temperature_average);
+  Serial.print("\n");
+  Serial.print("\nBME temp average as 8 bit = ");
+  Serial.print((uint8_t) bme_temperature_average);
+  Serial.print("\n");
+
+  bme_temperature_total = 0;
+  bme_pressure_total = 0;
+  bme_humidity_total = 0;
+  bme_altitude_total = 0;
+  busvoltage_total = 0;
+  current_mA_total = 0;
+  power_mW_total = 0;
+  vane_wind_direction_total = 0;
+  event_compass_heading_total = 0;
+  bno_compass_heading_total = 0;
+  Rotations = 0;  // Set Rotations count to 0 ready for calculations
+  Serial.print("loop counter = ");
+  Serial.print(loop_counter);
+  loop_counter = 0;
+  // convert to mph using the formula V=P(2.25/T)
+  // V = P(2.25/3) = P * 0.75
+  heading = calculateHeading(int((event_compass_heading_average + bno_compass_heading_average) / 2));
+}
+
+if ((millis() - time_from_last_display) > change_display_time_interval) {
+  time_from_last_display = millis();    
   if (page1){
-    displayValues1(bme_temperature, bme_pressure, bme_humidity, bme_altitude, shuntvoltage, busvoltage, current_mA, power_mW);
+    displayValues1(bme_temperature_average, bme_pressure_average, bme_humidity_average, bme_altitude_average, busvoltage_average, current_mA_average, power_mW_average);
     page1 = false;
   }
   else {
-    displayValues2(event_compass_heading, bno_compass_heading, vane_wind_direction, heading, WindSpeed);
+    displayValues2(vane_wind_direction_average, heading, WindSpeed);
     page1 = true;
   }
-
+}
   //print_current_voltage_power(shuntvoltage, busvoltage,current_mA, loadvoltage, power_mW );
 
   //Particle.publish("office temperature", String(bme_temperature));
@@ -417,7 +509,7 @@ event_compass_heading = get_event_compass_heading();
     // bno.getSensorOffsets(newCalib);
     // displaySensorOffsets(newCalib);
 
-
+loop_counter += 1;
 
       delay(BNO055_SAMPLERATE_DELAY_MS);
 }
@@ -478,6 +570,7 @@ void displayCalStatus(void)
     Serial.print(" M:");
     Serial.print(mag, DEC);
     display.clearDisplay();
+    display.setCursor(0,0);
     display.print("Sys:");
     display.print(system, DEC);
     display.print(" G:");
@@ -518,59 +611,48 @@ void printValues(float& bme_temperature, float& bme_pressure, float& bme_humidit
     Serial.println();
 }
 
-void displayValues1(float& bme_temperature, float& bme_pressure, float& bme_humidity, float& bme_altitude, float& shuntvoltage, float& busvoltage, float& current_mA, float& power_mW) {
+void displayValues1(int32_t bme_temperature_average, int32_t bme_pressure_average, int32_t bme_humidity_average, int32_t bme_altitude_average, int32_t busvoltage_average, int32_t current_mA_average, int32_t power_mW_average) {
     display.clearDisplay();
   display.display();
   display.setCursor(0,0);
     display.print("Temp. = ");
-    display.print(bme_temperature);
+    display.print(bme_temperature_average);
     display.println(" F");
 
     display.print("Press. = ");
-    display.print(bme_pressure);
+    display.print(bme_pressure_average);
     display.println(" mmHg");
 
-    display.print("Altitude = ");
-    display.print(bme_altitude);
-    display.println(" m");
-
     display.print("Humidity = ");
-    display.print(bme_humidity);
+    display.print(bme_humidity_average);
     display.println(" %");
 
-    display.print("shunt v. = ");
-    display.print(shuntvoltage);
-    display.println(" V");
+    display.print("Altitude = ");
+    display.print(bme_altitude_average);
+    display.println(" m");
 
     display.print("Bus voltage = ");
-    display.print(busvoltage);
+    display.print(busvoltage_average);
     display.println(" V");
 
     display.print("current = ");
-    display.print(current_mA);
+    display.print(current_mA_average);
     display.println(" mA");
 
     display.print("power = ");
-    display.print(power_mW);
+    display.print(power_mW_average);
     display.println(" mW");
 
     display.display(); // actually display all of the above
   }
-  
-void displayValues2(float& event_compass_heading, float& bno_compass_heading, int& vane_wind_direction, String& heading  , float& WindSpeed) {
+ 
+void displayValues2(int32_t vane_wind_direction_average, String& heading  , float& WindSpeed) {
     display.clearDisplay();
   display.display();
   display.setCursor(0,0);
-    display.print("event com. = ");
-    display.print(event_compass_heading);
-    display.println(" d");
-
-    display.print("bno com. = ");
-    display.print(bno_compass_heading);
-    display.println(" d");
 
     display.print("vane dir. = ");
-    display.print(vane_wind_direction);
+    display.print(vane_wind_direction_average);
     display.println(" d");
 
     display.print("heading = ");
@@ -756,20 +838,20 @@ int test = 55;
   Serial.println(" bytes");
 }
 
-float measure_wind_speed() {
-uint16_t wind_speed_time_interval= 60000; //value in ms
-uint32_t wind_speed_time = 0;
-float WindSpeed = 0;
-if ((millis() - wind_speed_time) > wind_speed_time_interval) {
-// Only update the display if change greater than 2 degrees.
-  wind_speed_time = millis();
-  WindSpeed = Rotations * 0.0375;
-Rotations = 0;  // Set Rotations count to 0 ready for calculations
-// convert to mph using the formula V=P(2.25/T)
-// V = P(2.25/3) = P * 0.75
-}
-return WindSpeed;
-}
+// float measure_wind_speed() {
+// uint16_t wind_speed_time_interval= 10000; //value in ms
+// uint32_t wind_speed_time = 0;
+// float WindSpeed = 0;
+// if ((millis() - wind_speed_time) > wind_speed_time_interval) {
+// // Only update the display if change greater than 2 degrees.
+//   wind_speed_time = millis();
+//   WindSpeed = Rotations * 2.25 / (millis() - wind_speed_time) * 1000;
+// Rotations = 0;  // Set Rotations count to 0 ready for calculations
+// // convert to mph using the formula V=P(2.25/T)
+// // V = P(2.25/3) = P * 0.75
+// }
+// return WindSpeed;
+// }
 
 int measure_wind_direction(){
 int VaneValue;// raw analog value from wind vane
