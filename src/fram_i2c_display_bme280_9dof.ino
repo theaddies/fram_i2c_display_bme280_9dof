@@ -38,7 +38,7 @@ float compass_heading;
 
 /* Set the delay between fresh samples */
 #define BNO055_STARTUP_SAMPLE_DELAY_MS (100)
-#define BNO055_SAMPLERATE_DELAY_MS (10000)
+#define BNO055_SAMPLERATE_DELAY_MS (2000)
 
 // Check I2C device address and correct line below (by default address is 0x29 or 0x28)
 //                                   id, address
@@ -61,9 +61,11 @@ uint8_t wind_pin = D6;
 volatile unsigned long Rotations = 0; // cup rotation counter used in interrupt routine
 volatile unsigned long ContactBounceTime; // Timer to avoid contact bounce in interrupt routine
 String heading;
+bool page1 = true;
 
 float WindSpeed; // speed miles per hour
 int vane_wind_direction;
+int calibrated_vane_direction;
 float bme_temperature;
 float bme_pressure;
 float bme_humidity;
@@ -197,6 +199,9 @@ Serial.println("Rotations\tMPH");
   //add a test for fram
 if (i2ceeprom.begin(0x50)) {  // you can stick the new i2c addr in here, e.g. begin(0x51);
     Serial.println("Found I2C EEPROM");
+    display.clearDisplay();
+    display.println("Found I2C FRAM");
+    display.display();
   } else {
     Serial.println("I2C EEPROM not identified ... check your connections?\r\n");
     while (1) delay(10);
@@ -271,6 +276,9 @@ millisOld=millis();
     /* always recal the mag as It goes out of calibration very often */
     if (foundCalib){
         Serial.println("Move sensor slightly to calibrate magnetometers");
+        display.clearDisplay();
+        display.println("Move sensor slightly");
+        display.display();
         while (!bno.isFullyCalibrated())
         {
             bno.getEvent(&event);
@@ -357,11 +365,20 @@ event_compass_heading = get_event_compass_heading();
 
   bno_compass_heading = get_compass_heading();
 
+  //calibrated_vane_direction = 
+
   heading = calculateHeading(int((event_compass_heading + bno_compass_heading) / 2));
 
   measure_current_voltage_power(shuntvoltage, busvoltage,current_mA, loadvoltage, power_mW );
 
-  displayValues(bme_temperature, bme_pressure, bme_humidity, bme_altitude, vane_wind_direction, WindSpeed, heading);
+  if (page1){
+    displayValues1(bme_temperature, bme_pressure, bme_humidity, bme_altitude, shuntvoltage, busvoltage, current_mA, power_mW);
+    page1 = false;
+  }
+  else {
+    displayValues2(event_compass_heading, bno_compass_heading, vane_wind_direction, heading, WindSpeed);
+    page1 = true;
+  }
 
   //print_current_voltage_power(shuntvoltage, busvoltage,current_mA, loadvoltage, power_mW );
 
@@ -432,6 +449,16 @@ void displayCalStatus(void)
     Serial.print(accel, DEC);
     Serial.print(" M:");
     Serial.print(mag, DEC);
+    display.clearDisplay();
+    display.print("Sys:");
+    display.print(system, DEC);
+    display.print(" G:");
+    display.print(gyro, DEC);
+    display.print(" A:");
+    display.print(accel, DEC);
+    display.print(" M:");
+    display.print(mag, DEC);
+    display.display();
 }
 
 void read_bme_values(float& bme_temperature, float& bme_pressure, float& bme_humidity, float& bme_altitude){
@@ -463,7 +490,7 @@ void printValues(float& bme_temperature, float& bme_pressure, float& bme_humidit
     Serial.println();
 }
 
-void displayValues(float& bme_temperature, float& bme_pressure, float& bme_humidity, float& bme_altitude, int& vane_wind_direction, float& WindSpeed, String& heading) {
+void displayValues1(float& bme_temperature, float& bme_pressure, float& bme_humidity, float& bme_altitude, float& shuntvoltage, float& busvoltage, float& current_mA, float& power_mW) {
     display.clearDisplay();
   display.display();
   display.setCursor(0,0);
@@ -472,7 +499,6 @@ void displayValues(float& bme_temperature, float& bme_pressure, float& bme_humid
     display.println(" F");
 
     display.print("Press. = ");
-
     display.print(bme_pressure);
     display.println(" mmHg");
 
@@ -481,27 +507,54 @@ void displayValues(float& bme_temperature, float& bme_pressure, float& bme_humid
     display.println(" m");
 
     display.print("Humidity = ");
-
     display.print(bme_humidity);
     display.println(" %");
 
-    display.print("Com head = ");
-    display.print(compass_heading);
+    display.print("shunt v. = ");
+    display.print(shuntvoltage);
+    display.println(" V");
+
+    display.print("Bus voltage = ");
+    display.print(busvoltage);
+    display.println(" V");
+
+    display.print("current = ");
+    display.print(current_mA);
+    display.println(" mA");
+
+    display.print("power = ");
+    display.print(power_mW);
+    display.println(" mW");
+
+    display.display(); // actually display all of the above
+  }
+  
+void displayValues2(float& event_compass_heading, float& bno_compass_heading, int& vane_wind_direction, String& heading  , float& WindSpeed) {
+    display.clearDisplay();
+  display.display();
+  display.setCursor(0,0);
+    display.print("event com. = ");
+    display.print(event_compass_heading);
     display.println(" d");
 
-    display.print("Wind dir = ");
-    display.println(vane_wind_direction);
+    display.print("bno com. = ");
+    display.print(bno_compass_heading);
+    display.println(" d");
 
-    display.print("Wind speed = ");
+    display.print("vane dir. = ");
+    display.print(vane_wind_direction);
+    display.println(" d");
+
+    display.print("heading = ");
+    display.println(heading);
+
+    display.print("WindSpeed = ");
     display.print(WindSpeed);
     display.println(" mph");
 
-display.print("heading = ");
-display.print(heading);
-
   display.display(); // actually display all of the above
   }
-  
+
   /**************************************************************************/
 /*
     Displays some basic information on this sensor from the unified
@@ -631,7 +684,7 @@ psi=atan2(Ym,Xm)/(2*3.14)*360;
  
 phiFold=phiFnew;
 thetaFold=thetaFnew;
- psi += 180;
+ psi = psi + 180;
  if(psi >= 360) {
    psi = psi -360;
  }
