@@ -6,6 +6,6 @@
         "*.ino": "cpp"
     },
     "particle.targetPlatform": "boron",
-    "particle.targetDevice": "bigdaddy_boron_2",
-    "particle.firmwareVersion": "2.2.0"
+    "particle.firmwareVersion": "2.2.0",
+    "particle.targetDevice": "BigdaddyBoron"
 }

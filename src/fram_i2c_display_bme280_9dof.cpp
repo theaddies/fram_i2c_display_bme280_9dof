@@ -28,15 +28,16 @@ void displayValues2(int32_t vane_wind_direction_average, String& heading  , floa
 void displaySensorDetails(void);
 void displaySensorOffsets(const adafruit_bno055_offsets_t &calibData);
 void isr_rotation ();
-float get_compass_heading();
+uint16_t get_compass_heading();
 void eeprom_test();
-int measure_wind_direction();
+uint16_t measure_wind_direction();
 void printHeading(int direction);
 String calculateHeading(int direction);
 void print_heading_pitch_roll();
 void measure_current_voltage_power(float& shuntvoltage, float& busvoltage, float& current_mA, float& loadvoltage, float& power_mW);
-void print_current_voltage_power(float& shuntvoltage, float& busvoltage, float& current_mA, float& loadvoltage, float& power_mW);
-float get_event_compass_heading();
+void print_current_voltage_power(float& busvoltage, float& shuntvoltage, float& current_mA, float& loadvoltage, float& power_mW);
+void print_current_voltage_power_avg(uint32_t busvoltage, uint32_t shuntvoltage, uint32_t current_mA, uint32_t loadvoltage, uint32_t power_mW);
+uint16_t get_event_compass_heading();
 #line 14 "z:/Personal/Electronics/particle/fram_i2c_display_bme280_9dof/src/fram_i2c_display_bme280_9dof.ino"
 Adafruit_EEPROM_I2C i2ceeprom;
 //Adafruit_FRAM_I2C i2ceeprom;
@@ -61,11 +62,11 @@ Adafruit_SH1107 display = Adafruit_SH1107(64, 128, &Wire);
 #define BUTTON_B  3
 #define BUTTON_C  2
 
-float compass_heading;
+
 
 /* Set the delay between fresh samples */
 #define BNO055_STARTUP_SAMPLE_DELAY_MS (100)
-#define BNO055_SAMPLERATE_DELAY_MS (200)
+#define BNO055_SAMPLERATE_DELAY_MS (1000)
 
 // Check I2C device address and correct line below (by default address is 0x29 or 0x28)
 //                                   id, address
@@ -91,20 +92,23 @@ String heading;
 bool page1 = true;
 
 float WindSpeed; // speed miles per hour
-int vane_wind_direction;
-int calibrated_vane_direction;
+uint16_t compass_heading;
+uint16_t vane_wind_direction;
+uint16_t calibrated_vane_direction;
+uint16_t bno_compass_heading;
+uint16_t event_compass_heading;
 float bme_temperature;
 float bme_pressure;
 float bme_humidity;
 float bme_altitude;
-   float shuntvoltage = 0;
-  float busvoltage = 0;
-  float current_mA = 0;
-  float loadvoltage = 0;
-  float power_mW = 0;
-  uint16_t average_time_interval= 10000; //value in ms
-    uint16_t change_display_time_interval= 2000; //value in ms
-    uint32_t time_from_last_display = 0;
+float shuntvoltage = 0;
+float busvoltage = 0;
+float current_mA = 0;
+float loadvoltage = 0;
+float power_mW = 0;
+uint16_t average_time_interval= 300000; //value in ms
+uint16_t change_display_time_interval= 2000; //value in ms
+uint32_t time_from_last_display = 0;
 uint32_t timeFromLastReading = 0;
 uint16_t loop_counter = 0;
 
@@ -115,6 +119,8 @@ uint32_t bme_altitude_total;
 uint32_t busvoltage_total;
 uint32_t current_mA_total;
 uint32_t power_mW_total;
+uint32_t load_voltage_total;
+uint32_t shunt_voltage_total;
 uint32_t vane_wind_direction_total;
 uint32_t heading_total;
 uint32_t event_compass_heading_total;
@@ -126,7 +132,9 @@ uint32_t bme_humidity_average;
 uint32_t bme_altitude_average;
 uint32_t busvoltage_average;
 uint32_t current_mA_average;
+uint32_t load_voltage_average;
 uint32_t power_mW_average;
+uint32_t shunt_voltage_average;
 uint32_t vane_wind_direction_average;
 uint32_t event_compass_heading_average;
 uint32_t bno_compass_heading_average;
@@ -150,8 +158,7 @@ float Xm;
 float Ym;
 float psi;
 float dt;
-float bno_compass_heading;
-float event_compass_heading;
+
 unsigned long millisOld;
 int64_t time_base = 0;
 int64_t time_counter  = 60;
@@ -196,7 +203,6 @@ attachInterrupt(wind_pin, isr_rotation, FALLING);
 
 Serial.println("Davis Wind Speed Test");
 Serial.println("Rotations\tMPH");
-
 
     long bnoID;
     bool foundCalib = false;
@@ -268,7 +274,7 @@ if (i2ceeprom.begin(0x50)) {  // you can stick the new i2c addr in here, e.g. be
 
 
 int eeAddress = 0;
-eeprom_test();
+//eeprom_test();
 
   /* Initialise the sensor */
   if(!bno.begin())
@@ -397,7 +403,7 @@ millisOld=millis();
 */
 /**************************************************************************/
 void loop(void) {
-  int count = 0;
+
 //this enables mosfet to turn on wind speed and direction measurement.
 digitalWrite(vane_switch, HIGH);
 
@@ -425,16 +431,27 @@ event_compass_heading = get_event_compass_heading();
 
   measure_current_voltage_power(shuntvoltage, busvoltage,current_mA, loadvoltage, power_mW );
 
+  Serial.print("\ncurrent_mA =        ");
+  Serial.print( current_mA);
+  Serial.print("\n");
+  Serial.print("vane wind direction = ");
+  Serial.print( vane_wind_direction);
+  Serial.print("\n");
+
+  print_current_voltage_power(busvoltage, shuntvoltage, current_mA, loadvoltage, power_mW);
+
 bme_temperature_total = bme_temperature_total + (int) bme_temperature;
 bme_pressure_total = bme_pressure_total + (int) bme_pressure;
 bme_humidity_total = bme_humidity_total + (int) bme_humidity;
 bme_altitude_total = bme_altitude_total + (int) bme_altitude;
 busvoltage_total = busvoltage_total + (int) busvoltage;
+load_voltage_total = load_voltage_total + (int) loadvoltage;
+shunt_voltage_total = shunt_voltage_total + (int) busvoltage;
 current_mA_total = current_mA_total + (int) current_mA;
 power_mW_total = power_mW_total + (int) power_mW;
-vane_wind_direction_total = vane_wind_direction_total + (int) vane_wind_direction;
-event_compass_heading_total = event_compass_heading_total + (int) event_compass_heading;
-bno_compass_heading_total = bno_compass_heading_total + (int) bno_compass_heading;
+vane_wind_direction_total = vane_wind_direction_total + vane_wind_direction;
+event_compass_heading_total = event_compass_heading_total + event_compass_heading;
+bno_compass_heading_total = bno_compass_heading_total + bno_compass_heading;
 
 if ((millis() - timeFromLastReading) > average_time_interval) {
 
@@ -444,31 +461,61 @@ if ((millis() - timeFromLastReading) > average_time_interval) {
   bme_humidity_average = bme_humidity_total / loop_counter;
   bme_altitude_average = bme_altitude_total / loop_counter;
   busvoltage_average = busvoltage_total / loop_counter;
+  load_voltage_average = load_voltage_total / loop_counter;
+  shunt_voltage_average = shunt_voltage_total / loop_counter;
   current_mA_average = current_mA_total / loop_counter;
   power_mW_average = power_mW_total / loop_counter;
   vane_wind_direction_average = vane_wind_direction_total / loop_counter;
   event_compass_heading_average = event_compass_heading_total / loop_counter;
   bno_compass_heading_average = bno_compass_heading_total / loop_counter;
   timeFromLastReading = millis();
-  
+
+  print_current_voltage_power_avg(busvoltage_average, shunt_voltage_average, current_mA_average, load_voltage_average, power_mW_average);
+
   Serial.print("rotations = ");
   Serial.print(Rotations);
   Serial.print("\n");
-  Serial.print("\nBME altitude total = ");
+  Serial.print("\nBME altitude total =        ");
   Serial.print(bme_altitude_total);
-  Serial.print("\t");
-  Serial.print("\nBME temp total = ");
+  Serial.print("\nBME temp total =            ");
   Serial.print(bme_temperature_total);
-  Serial.print("\t");
-  Serial.print("loop counter = ");
+  Serial.print("\nloop counter =              ");
   Serial.print(loop_counter);
   Serial.print("\n");
-  Serial.print("\nBME temp average = ");
+  Serial.print("BME temp average =           ");
   Serial.print(bme_temperature_average);
   Serial.print("\n");
-  Serial.print("\nBME temp average as 8 bit = ");
+  Serial.print("BME temp average as 8 bit =  ");
   Serial.print((uint8_t) bme_temperature_average);
   Serial.print("\n");
+  Serial.print("current_mA average=         ");
+  Serial.print( current_mA_average);
+  Serial.print("\n");
+  Serial.print("power_mW average =          ");
+  Serial.print( power_mW_average);
+  Serial.print("\n");
+
+uint8_t temp = bme_temperature_average;
+uint16_t press = bme_pressure_average;
+uint8_t humid = bme_humidity_average;
+uint8_t ws = WindSpeed;
+uint16_t vane_d = vane_wind_direction_average;
+uint16_t event_d = event_compass_heading_average;
+uint16_t bno_d = bno_compass_heading_average;
+uint8_t c = current_mA_average;
+uint8_t v = busvoltage_average;
+uint16_t p = power_mW_average;
+
+String data = String::format(
+"{\"temp\":%d, \"press\":%d, \"humid\":%d, \"ws\":%d, \"vane_d\":%d, \"event_d\":%d, \"bno_d\":%d, \"c\":%d, \"v\":%d, \"p\":%d}",
+temp, press, humid, ws, vane_d, event_d, bno_d, c, v, p
+);
+
+Serial.print("\ndata\n");
+Serial.print(data);
+Serial.print("\ndata\n");
+
+Particle.publish("data", data);
 
   bme_temperature_total = 0;
   bme_pressure_total = 0;
@@ -723,7 +770,7 @@ ContactBounceTime = millis();
 
 }
 
-float get_compass_heading() {
+uint16_t get_compass_heading() {
   // put your main code here, to run repeatedly:
 uint8_t system, gyro, accel, mg = 0;
 bno.getCalibration(&system, &gyro, &accel, &mg);
@@ -798,7 +845,7 @@ thetaFold=thetaFnew;
  if(psi >= 360) {
    psi = psi -360;
  }
- return(psi);
+ return((int)psi);
 //delay(BNO055_SAMPLERATE_DELAY_MS);
 }
 
@@ -853,15 +900,16 @@ int test = 55;
 // return WindSpeed;
 // }
 
-int measure_wind_direction(){
-int VaneValue;// raw analog value from wind vane
-int Direction;// translated 0 - 360 direction
-int CalDirection;// converted value with offset applied
+uint16_t measure_wind_direction(){
+
+uint16_t VaneValue;// raw analog value from wind vane
+uint16_t Direction;// translated 0 - 360 direction
+uint16_t CalDirection;// converted value with offset applied
 //int LastValue = 0;
 VaneValue = analogRead(vane_pin);
 //digitalWrite(vane_switch, LOW);
-//Serial.println("analog read value = ");
-//Serial.print(VaneValue);
+Serial.println("analog read value = ");
+Serial.print(VaneValue);
 Direction = map(VaneValue, 0, 4095, 0, 360);
 CalDirection = Direction + Offset;
 
@@ -955,8 +1003,7 @@ void measure_current_voltage_power(float& shuntvoltage, float& busvoltage, float
   loadvoltage = busvoltage + (shuntvoltage / 1000);
 
 }
-
-void print_current_voltage_power(float& shuntvoltage, float& busvoltage, float& current_mA, float& loadvoltage, float& power_mW){
+void print_current_voltage_power(float& busvoltage, float& shuntvoltage, float& current_mA, float& loadvoltage, float& power_mW){
 
   
   Serial.print("Bus Voltage:   "); Serial.print(busvoltage); Serial.println(" V");
@@ -966,9 +1013,19 @@ void print_current_voltage_power(float& shuntvoltage, float& busvoltage, float& 
   Serial.print("Power:         "); Serial.print(power_mW); Serial.println(" mW");
   Serial.println("");
 }
+void print_current_voltage_power_avg(uint32_t busvoltage, uint32_t shuntvoltage, uint32_t current_mA, uint32_t loadvoltage, uint32_t power_mW){
+
+  
+  Serial.print("Bus Voltage average:   "); Serial.print(busvoltage); Serial.println(" V");
+  Serial.print("Shunt Voltage average: "); Serial.print(shuntvoltage); Serial.println(" mV");
+  Serial.print("Load Voltage average:  "); Serial.print(loadvoltage); Serial.println(" V");
+  Serial.print("Current average:       "); Serial.print(current_mA); Serial.println(" mA");
+  Serial.print("Power average:         "); Serial.print(power_mW); Serial.println(" mW");
+  Serial.println("");
+}
 
 
-float get_event_compass_heading(){
+uint16_t get_event_compass_heading(){
 sensors_event_t event;
   bno.getEvent(&event);
   
@@ -983,7 +1040,7 @@ sensors_event_t event;
 
   Serial.println("\n\n");
 
-  compass_heading = event.orientation.x + 104;
+  compass_heading = (int)(event.orientation.x + 0);
 
   if(compass_heading > 360) {
     compass_heading = compass_heading - 360;
