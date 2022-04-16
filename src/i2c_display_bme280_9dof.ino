@@ -1,7 +1,5 @@
 #include <Wire.h>
-#include <Adafruit_Sensor.h>
-#include <Adafruit_BNO055.h>
-#include <imumaths.h>
+// #include <imumaths.h>
 #include <SPI.h>
 #include <Adafruit_INA219.h>
 #include <Adafruit_GFX.h>
@@ -10,13 +8,70 @@
 #include "Adafruit_EEPROM_I2C.h"
 #include "Adafruit_FRAM_I2C.h"
 #include "math.h"
+#include <SparkFunLSM9DS1.h>
+#include "OneWire.h"
+#include "DS18.h"
+SYSTEM_THREAD(ENABLED);
+LSM9DS1 imu;
+DS18 sensor(D8);
+
+// VERY IMPORTANT!
+//These are the previously determined offsets and scale factors for accelerometer and magnetometer, using MPU9250_cal and Magneto
+//The compass will NOT work well or at all if these are not correct
+
+//Accel scale 16457.0 to normalize
+float A_B[3]
+{ 516.87, -519.49,  125.52};
+
+float A_Ainv[3][3]
+  {{  1.04644, -0.00706,  0.03306},
+  { -0.00706,  1.01850,  0.00696},
+  {  0.03306,  0.00696,  0.98505}};
+
+//  float A_B[3]
+//  {  899.26, 2792.96,   26.59};
+
+//  float A_Ainv[3][3]
+//   {{  0.97638, -0.09504, -0.01242},
+//   { -0.09504,  0.86320, -0.01375},
+//   { -0.01242, -0.01375,  1.00225}};
+
+//Mag scale 3746.0 to normalize
+float M_B[3]
+ {  602.13, 1603.16,-1366.82};
+
+float M_Ainv[3][3]
+  {{  1.23900,  0.04296,  0.02386},
+  {  0.04296,  1.23621,  0.01496},
+  {  0.02386,  0.01496,  1.24947}};
+
+// float M_B[3]
+//  {   20.21,  755.67, -230.81};
+
+//  float M_Ainv[3][3]
+//   {{ 13.78062,  0.13583, -0.21012},
+//   {  0.13583, 14.70536,  0.03224},
+//   { -0.21012,  0.03224, 15.57351}};
+
+// local magnetic declination in degrees
+float declination = -8.466;
+
+/*
+  This tilt-compensated code assumes that the Adafruit LSM9DS1 sensor board is oriented with Y pointing
+  to the North, X pointing West, and Z pointing up.
+  The code compensates for tilts of up to 90 degrees away from horizontal.
+  Facing vector p is the direction of travel and allows reassigning these directions.
+  It should be defined as pointing forward,
+  parallel to the ground, with coordinates {X, Y, Z} (in magnetometer frame of reference).
+*/
+float p[] = {0, 1, 0};  //Y marking on sensor board points toward yaw = 0
+
+//SYSTEM_MODE(SEMI_AUTOMATIC);
 
 Adafruit_EEPROM_I2C i2ceeprom;
 //Adafruit_FRAM_I2C i2ceeprom;
 
 Adafruit_INA219 ina219;
-
-#define EEPROM_ADDR 0x50  // the default address for the I2C FRAM eeprom
 
 #define SEALEVELPRESSURE_HPA (1013.25)
 
@@ -34,15 +89,13 @@ Adafruit_SH1107 display = Adafruit_SH1107(64, 128, &Wire);
 #define BUTTON_B  3
 #define BUTTON_C  2
 
-
-
 /* Set the delay between fresh samples */
 #define BNO055_STARTUP_SAMPLE_DELAY_MS (100)
 #define BNO055_SAMPLERATE_DELAY_MS (1000)
 
 // Check I2C device address and correct line below (by default address is 0x29 or 0x28)
 //                                   id, address
-Adafruit_BNO055 bno = Adafruit_BNO055(55, 0x28);
+// Adafruit_BNO055 bno = Adafruit_BNO055(55, 0x28);
 
 /**************************************************************************/
 /*
@@ -58,6 +111,7 @@ Adafruit_BNO055 bno = Adafruit_BNO055(55, 0x28);
 uint8_t vane_pin = A0;
 uint8_t vane_switch = D5;
 uint8_t wind_pin = D6;
+uint8_t calib_light = D7;
 volatile unsigned long Rotations = 0; // cup rotation counter used in interrupt routine
 volatile unsigned long ContactBounceTime; // Timer to avoid contact bounce in interrupt routine
 String heading;
@@ -69,6 +123,8 @@ uint16_t vane_wind_direction;
 uint16_t calibrated_vane_direction;
 uint16_t bno_compass_heading;
 uint16_t event_compass_heading;
+float water_temperature;
+float heading_lis3mdl;
 float bme_temperature;
 float bme_pressure;
 float bme_humidity;
@@ -78,12 +134,13 @@ float busvoltage = 0;
 float current_mA = 0;
 float loadvoltage = 0;
 float power_mW = 0;
-uint16_t average_time_interval= 300000; //value in ms
+uint32_t average_time_interval= 300000; //value in ms
 uint16_t change_display_time_interval= 2000; //value in ms
 uint32_t time_from_last_display = 0;
 uint32_t timeFromLastReading = 0;
 uint16_t loop_counter = 0;
 
+uint32_t water_temperature_total;
 uint32_t bme_temperature_total;
 uint32_t bme_pressure_total;
 uint32_t bme_humidity_total;
@@ -98,15 +155,16 @@ uint32_t heading_total;
 uint32_t event_compass_heading_total;
 uint32_t bno_compass_heading_total;
 
+uint32_t water_temperature_average;
 uint32_t bme_temperature_average;
 uint32_t bme_pressure_average;
 uint32_t bme_humidity_average;
 uint32_t bme_altitude_average;
-uint32_t busvoltage_average;
+float busvoltage_average;
 uint32_t current_mA_average;
 uint32_t load_voltage_average;
 uint32_t power_mW_average;
-uint32_t shunt_voltage_average;
+float shunt_voltage_average;
 uint32_t vane_wind_direction_average;
 uint32_t event_compass_heading_average;
 uint32_t bno_compass_heading_average;
@@ -130,6 +188,9 @@ float Xm;
 float Ym;
 float psi;
 float dt;
+float Xm_print, Ym_print, Zm_print;
+float Xm_off, Ym_off, Zm_off;
+float Xm_cal, Ym_cal, Zm_cal;
 
 unsigned long millisOld;
 int64_t time_base = 0;
@@ -140,11 +201,23 @@ int64_t time_counter  = 60;
 */
 /**************************************************************************/
 void setup(void) {
+pinMode(calib_light, OUTPUT);
+digitalWrite(calib_light, HIGH);
+Wire.begin();
+Wire.setClock(400000);
+
+  if (imu.begin() == false) // with no arguments, this uses default addresses (AG:0x6B, M:0x1E) and i2c port (Wire).
+  {
+    Serial.println(F("LSM9DS1 not detected"));
+    while (1);
+  }
+
 
     uint32_t currentFrequency;
 
   Serial.println("Hello!");
   
+
   // Initialize the INA219.
   // By default the initialization will use the largest range (32V, 2A).  However
   // you can call a setCalibration function to change this range (see comments).
@@ -168,6 +241,7 @@ Serial.print("\n");
 
 pinMode(vane_pin, INPUT);
 pinMode(vane_switch, OUTPUT);
+
 Serial.println("Vane Value\tDirection\tHeading");
 
 pinMode(wind_pin, INPUT);
@@ -175,9 +249,6 @@ attachInterrupt(wind_pin, isr_rotation, FALLING);
 
 Serial.println("Davis Wind Speed Test");
 Serial.println("Rotations\tMPH");
-
-    long bnoID;
-    bool foundCalib = false;
 
   Serial.begin(115200);
 
@@ -212,6 +283,7 @@ Serial.println("Rotations\tMPH");
   display.print("BigdaddyAddie weather station!\n");
   display.print("connected!\n");
   display.display(); // actually display all of the above
+  delay(1000);
 
     unsigned status;
     
@@ -229,143 +301,8 @@ Serial.println("Rotations\tMPH");
         while (1) delay(10);
     }
 
-  //add a test for fram
-if (i2ceeprom.begin(0x50)) {  // you can stick the new i2c addr in here, e.g. begin(0x51);
-    Serial.println("Found I2C EEPROM");
-    display.clearDisplay();
-    display.println("Found I2C FRAM");
-    display.display();
-  } else {
-    Serial.println("I2C EEPROM not identified ... check your connections?\r\n");
-    while (1) delay(10);
-  }
-  
-  // // Write the first byte to 0xAF
-  // uint8_t test = 0xAF;
-  // i2ceeprom.write(0x0, test);
-
-
-int eeAddress = 0;
-//eeprom_test();
-
-  /* Initialise the sensor */
-  if(!bno.begin())
-  {
-    /* There was a problem detecting the BNO055 ... check your connections */
-    Serial.print("Ooops, no BNO055 detected ... Check your wiring or I2C ADDR!");
-    while(1);
-  }
-   Serial.print("time base value =");
-Serial.print(time_base);
-Serial.print("\n");
-  delay(1000);
-   
-  /* Display some basic information on this sensor */
-  displaySensorDetails();
-
-    EEPROM.get(eeAddress, bnoID);
-
-    adafruit_bno055_offsets_t calibrationData;
-    sensor_t sensor;
-
-    /*
-    *  Look for the sensor's unique ID at the beginning oF EEPROM.
-    *  This isn't foolproof, but it's better than nothing.
-    */
-    bno.getSensor(&sensor);
-    if (bnoID != sensor.sensor_id)
-    {
-        Serial.println("\nNo Calibration Data for this sensor exists in EEPROM");
-        delay(500);
-    }
-    else
-    {
-        Serial.println("\nFound Calibration for this sensor in EEPROM.");
-        eeAddress += sizeof(long);
-        EEPROM.get(eeAddress, calibrationData);
-
-        displaySensorOffsets(calibrationData);
-
-        Serial.println("\n\nRestoring Calibration data to the BNO055...");
-        bno.setSensorOffsets(calibrationData);
-
-        Serial.println("\n\nCalibration data loaded into BNO055");
-        foundCalib = true;
-    }
-
-    delay(1000);
-
-    /* Display some basic information on this sensor */
-    displaySensorDetails();
-
-    /* Optional: Display current status */
-    displaySensorStatus();
-
-   /* Crystal must be configured AFTER loading calibration data into BNO055. */
-    bno.setExtCrystalUse(true);
-millisOld=millis();
-    sensors_event_t event;
-    bno.getEvent(&event);
-    /* always recal the mag as It goes out of calibration very often */
-    if (foundCalib){
-        Serial.println("Move sensor slightly to calibrate magnetometers");
-        display.clearDisplay();
-        display.println("Move sensor slightly");
-        display.display();
-        while (!bno.isFullyCalibrated())
-        {
-            bno.getEvent(&event);
-            displayCalStatus();
-            delay(BNO055_STARTUP_SAMPLE_DELAY_MS);
-        }
-    }
-    else
-    {
-        Serial.println("Please Calibrate Sensor: ");
-        while (!bno.isFullyCalibrated())
-        {
-            bno.getEvent(&event);
-
-            Serial.print("X: ");
-            Serial.print(event.orientation.x, 4);
-            Serial.print("\tY: ");
-            Serial.print(event.orientation.y, 4);
-            Serial.print("\tZ: ");
-            Serial.print(event.orientation.z, 4);
-
-            /* Optional: Display calibration status */
-            displayCalStatus();
-
-            /* New line for the next sample */
-            Serial.println("");
-
-            /* Wait the specified delay before requesting new data */
-            delay(BNO055_STARTUP_SAMPLE_DELAY_MS);
-        }
-    }
-
-    Serial.println("\nFully calibrated!");
-    Serial.println("--------------------------------");
-    Serial.println("Calibration Results: ");
-    adafruit_bno055_offsets_t newCalib;
-    bno.getSensorOffsets(newCalib);
-    displaySensorOffsets(newCalib);
-
-    Serial.println("\n\nStoring calibration data to EEPROM...");
-
-    eeAddress = 0;
-    bno.getSensor(&sensor);
-    bnoID = sensor.sensor_id;
-
-    EEPROM.put(eeAddress, bnoID);
-
-    eeAddress += sizeof(long);
-    EEPROM.put(eeAddress, newCalib);
-    Serial.println("Data stored to EEPROM.");
-
-    Serial.println("\n--------------------------------\n");
-    delay(500);
-  
+   digitalWrite(calib_light, LOW);
+    
 }
 
 /**************************************************************************/
@@ -374,7 +311,20 @@ millisOld=millis();
     should go here)
 */
 /**************************************************************************/
-void loop(void) {
+void loop() {
+  float Axyz[3], Mxyz[3]; //centered and scaled accel/mag data
+
+  // Update the sensor values whenever new data is available
+  if ( imu.accelAvailable() ) imu.readAccel();
+  if ( imu.magAvailable() )   imu.readMag();
+  
+    get_scaled_IMU(Axyz, Mxyz);
+
+    // correct accelerometer handedness
+    // Note: the illustration in the LSM9DS1 data sheet implies that the magnetometer 
+    // X and Y axes are rotated with respect to the accel/gyro X and Y, but this is not case.
+    
+    Axyz[0] = -Axyz[0]; //fix accel handedness
 
 //this enables mosfet to turn on wind speed and direction measurement.
 digitalWrite(vane_switch, HIGH);
@@ -387,21 +337,16 @@ read_bme_values(bme_temperature, bme_pressure, bme_humidity, bme_altitude);
 
 printValues(bme_temperature, bme_pressure, bme_humidity, bme_altitude);
 
-
-
-  // delay(delayTime);
-  // if(!digitalRead(BUTTON_A)) display.print("A");
-  // if(!digitalRead(BUTTON_B)) display.print("B");
-  // if(!digitalRead(BUTTON_C)) display.print("C");
-  // delay(10);
-  // yield();
-  // display.display();
-
-event_compass_heading = get_event_compass_heading();
-
-  bno_compass_heading = get_compass_heading();
+  bno_compass_heading = get_heading(Axyz, Mxyz, p);
 
   measure_current_voltage_power(shuntvoltage, busvoltage,current_mA, loadvoltage, power_mW );
+
+  if (sensor.read()) {
+    Serial.printf("Temperature %.2f C %.2f F ", sensor.celsius(), sensor.fahrenheit());
+    water_temperature = sensor.fahrenheit();
+    // Additional info useful while debugging
+    printDebugInfo();
+  }
 
   Serial.print("\ncurrent_mA =        ");
   Serial.print( current_mA);
@@ -409,9 +354,20 @@ event_compass_heading = get_event_compass_heading();
   Serial.print("vane wind direction = ");
   Serial.print( vane_wind_direction);
   Serial.print("\n");
+  Serial.print("compass heading = ");
+  Serial.print( bno_compass_heading);
+  Serial.print("\n");
+  Serial.print("wind speed rotations = ");
+  Serial.print( Rotations);
+  Serial.print("\n");
+  Serial.print("water tempeature = ");
+  Serial.print(water_temperature);
+  Serial.print("\n");
+  Serial.print("\n");
 
   print_current_voltage_power(busvoltage, shuntvoltage, current_mA, loadvoltage, power_mW);
 
+water_temperature_total = water_temperature_total + (int) water_temperature;
 bme_temperature_total = bme_temperature_total + (int) bme_temperature;
 bme_pressure_total = bme_pressure_total + (int) bme_pressure;
 bme_humidity_total = bme_humidity_total + (int) bme_humidity;
@@ -422,23 +378,24 @@ shunt_voltage_total = shunt_voltage_total + (int) busvoltage;
 current_mA_total = current_mA_total + (int) current_mA;
 power_mW_total = power_mW_total + (int) power_mW;
 vane_wind_direction_total = vane_wind_direction_total + vane_wind_direction;
-event_compass_heading_total = event_compass_heading_total + event_compass_heading;
+//event_compass_heading_total = event_compass_heading_total + event_compass_heading;
 bno_compass_heading_total = bno_compass_heading_total + bno_compass_heading;
 
 if ((millis() - timeFromLastReading) > average_time_interval) {
 
   WindSpeed = (float) Rotations * 2.25 / (float) (millis() - timeFromLastReading) * 1000.;
+  water_temperature_average = water_temperature_total / loop_counter;
   bme_temperature_average = bme_temperature_total / loop_counter;
   bme_pressure_average = bme_pressure_total / loop_counter;
   bme_humidity_average = bme_humidity_total / loop_counter;
   bme_altitude_average = bme_altitude_total / loop_counter;
-  busvoltage_average = busvoltage_total / loop_counter;
+  busvoltage_average = (float) busvoltage_total / (float) loop_counter;
   load_voltage_average = load_voltage_total / loop_counter;
-  shunt_voltage_average = shunt_voltage_total / loop_counter;
+  shunt_voltage_average = (float) shunt_voltage_total / (float) loop_counter;
   current_mA_average = current_mA_total / loop_counter;
   power_mW_average = power_mW_total / loop_counter;
   vane_wind_direction_average = vane_wind_direction_total / loop_counter;
-  event_compass_heading_average = event_compass_heading_total / loop_counter;
+//  event_compass_heading_average = event_compass_heading_total / loop_counter;
   bno_compass_heading_average = bno_compass_heading_total / loop_counter;
   timeFromLastReading = millis();
 
@@ -460,6 +417,9 @@ if ((millis() - timeFromLastReading) > average_time_interval) {
   Serial.print("BME temp average as 8 bit =  ");
   Serial.print((uint8_t) bme_temperature_average);
   Serial.print("\n");
+  Serial.print("water temp average as 8 bit =  ");
+  Serial.print((uint8_t) water_temperature_average);
+  Serial.print("\n");
   Serial.print("current_mA average=         ");
   Serial.print( current_mA_average);
   Serial.print("\n");
@@ -467,20 +427,21 @@ if ((millis() - timeFromLastReading) > average_time_interval) {
   Serial.print( power_mW_average);
   Serial.print("\n");
 
+uint8_t w_temp = water_temperature_average;
 uint8_t temp = bme_temperature_average;
 uint16_t press = bme_pressure_average;
 uint8_t humid = bme_humidity_average;
 uint8_t ws = WindSpeed;
 uint16_t vane_d = vane_wind_direction_average;
-uint16_t event_d = event_compass_heading_average;
+//uint16_t event_d = event_compass_heading_average;
 uint16_t bno_d = bno_compass_heading_average;
 uint8_t c = current_mA_average;
-uint8_t v = busvoltage_average;
+float v = busvoltage_average;
 uint16_t p = power_mW_average;
 
 String data = String::format(
-"{\"temp\":%d, \"press\":%d, \"humid\":%d, \"ws\":%d, \"vane_d\":%d, \"event_d\":%d, \"bno_d\":%d, \"c\":%d, \"v\":%d, \"p\":%d}",
-temp, press, humid, ws, vane_d, event_d, bno_d, c, v, p
+"{\"temp\":%d, \"press\":%d, \"humid\":%d, \"wind_speed\":%d, \"wind_direction\":%d, \"bno_direction\":%d, \"w_temp\":%d, \"current\":%d, \"voltage\":%6.3f, \"power\":%d}",
+temp, press, humid, ws, vane_d, bno_d, w_temp, c, v, p
 );
 
 Serial.print("\ndata\n");
@@ -489,6 +450,7 @@ Serial.print("\ndata\n");
 
 Particle.publish("data", data);
 
+  water_temperature_total = 0;
   bme_temperature_total = 0;
   bme_pressure_total = 0;
   bme_humidity_total = 0;
@@ -497,7 +459,6 @@ Particle.publish("data", data);
   current_mA_total = 0;
   power_mW_total = 0;
   vane_wind_direction_total = 0;
-  event_compass_heading_total = 0;
   bno_compass_heading_total = 0;
   Rotations = 0;  // Set Rotations count to 0 ready for calculations
   Serial.print("loop counter = ");
@@ -505,7 +466,7 @@ Particle.publish("data", data);
   loop_counter = 0;
   // convert to mph using the formula V=P(2.25/T)
   // V = P(2.25/3) = P * 0.75
-  heading = calculateHeading(int((event_compass_heading_average + bno_compass_heading_average) / 2));
+  heading = calculateHeading(bno_compass_heading_average);
 }
 
 if ((millis() - time_from_last_display) > change_display_time_interval) {
@@ -515,18 +476,10 @@ if ((millis() - time_from_last_display) > change_display_time_interval) {
     page1 = false;
   }
   else {
-    displayValues2(vane_wind_direction_average, heading, WindSpeed);
+    displayValues2(water_temperature_average, vane_wind_direction_average, heading, WindSpeed);
     page1 = true;
   }
 }
-  //print_current_voltage_power(shuntvoltage, busvoltage,current_mA, loadvoltage, power_mW );
-
-  //Particle.publish("office temperature", String(bme_temperature));
-
-
-    //   adafruit_bno055_offsets_t newCalib;
-    // bno.getSensorOffsets(newCalib);
-    // displaySensorOffsets(newCalib);
 
 loop_counter += 1;
 
@@ -539,67 +492,12 @@ loop_counter += 1;
     */
 /**************************************************************************/
 
-void displaySensorStatus(void)
-{
-    /* Get the system status values (mostly for debugging purposes) */
-    uint8_t system_status, self_test_results, system_error;
-    system_status = self_test_results = system_error = 0;
-    bno.getSystemStatus(&system_status, &self_test_results, &system_error);
-
-    /* Display the results in the Serial Monitor */
-    Serial.println("");
-    Serial.print("System Status: 0x");
-    Serial.println(system_status, HEX);
-    Serial.print("Self Test:     0x");
-    Serial.println(self_test_results, HEX);
-    Serial.print("System Error:  0x");
-    Serial.println(system_error, HEX);
-    Serial.println("");
-    delay(500);
-}
-
 /**************************************************************************/
 /*
     Display sensor calibration status
     */
 /**************************************************************************/
-void displayCalStatus(void)
-{
-    /* Get the four calibration values (0..3) */
-    /* Any sensor data reporting 0 should be ignored, */
-    /* 3 means 'fully calibrated" */
-    uint8_t system, gyro, accel, mag;
-    system = gyro = accel = mag = 0;
-    bno.getCalibration(&system, &gyro, &accel, &mag);
 
-    /* The data should be ignored until the system calibration is > 0 */
-    Serial.print("\t");
-    if (!system)
-    {
-        Serial.print("! ");
-    }
-
-    /* Display the individual values */
-    Serial.print("Sys:");
-    Serial.print(system, DEC);
-    Serial.print(" G:");
-    Serial.print(gyro, DEC);
-    Serial.print(" A:");
-    Serial.print(accel, DEC);
-    Serial.print(" M:");
-    Serial.print(mag, DEC);
-    display.clearDisplay();
-    display.setCursor(0,0);
-    display.print("Sys:");
-    display.print(system, DEC);
-    display.print(" G:");
-    display.print(gyro, DEC);
-    display.print(" A:");
-    display.print(accel, DEC);
-    display.print(" M:");
-    display.print(mag, DEC);
-    display.display();
-}
 
 void read_bme_values(float& bme_temperature, float& bme_pressure, float& bme_humidity, float& bme_altitude){
 bme_temperature = bme.readTemperature()*1.8F + 32.;
@@ -630,7 +528,7 @@ void printValues(float& bme_temperature, float& bme_pressure, float& bme_humidit
     Serial.println();
 }
 
-void displayValues1(int32_t bme_temperature_average, int32_t bme_pressure_average, int32_t bme_humidity_average, int32_t bme_altitude_average, int32_t busvoltage_average, int32_t current_mA_average, int32_t power_mW_average) {
+void displayValues1(int32_t bme_temperature_average, int32_t bme_pressure_average, int32_t bme_humidity_average, int32_t bme_altitude_average, float busvoltage_average, int32_t current_mA_average, int32_t power_mW_average) {
     display.clearDisplay();
   display.display();
   display.setCursor(0,0);
@@ -665,11 +563,15 @@ void displayValues1(int32_t bme_temperature_average, int32_t bme_pressure_averag
     display.display(); // actually display all of the above
   }
  
-void displayValues2(int32_t vane_wind_direction_average, String& heading  , float& WindSpeed) {
+void displayValues2(int8_t water_temperature_average, int32_t vane_wind_direction_average, String& heading  , float& WindSpeed) {
     display.clearDisplay();
   display.display();
   display.setCursor(0,0);
 
+    display.print("water temp. = ");
+    display.print(water_temperature_average);
+    display.println(" F");
+    
     display.print("vane dir. = ");
     display.print(vane_wind_direction_average);
     display.println(" d");
@@ -690,47 +592,6 @@ void displayValues2(int32_t vane_wind_direction_average, String& heading  , floa
     sensor API sensor_t type (see Adafruit_Sensor for more information)
 */
 /**************************************************************************/
-void displaySensorDetails(void)
-{
-  sensor_t sensor;
-  bno.getSensor(&sensor);
-  Serial.println("------------------------------------");
-  Serial.print  ("Sensor:       "); Serial.println(sensor.name);
-  Serial.print  ("Driver Ver:   "); Serial.println(sensor.version);
-  Serial.print  ("Unique ID:    "); Serial.println(sensor.sensor_id);
-  Serial.print  ("Max Value:    "); Serial.print(sensor.max_value); Serial.println(" xxx");
-  Serial.print  ("Min Value:    "); Serial.print(sensor.min_value); Serial.println(" xxx");
-  Serial.print  ("Resolution:   "); Serial.print(sensor.resolution); Serial.println(" xxx");
-  Serial.println("------------------------------------");
-  Serial.println("");
-  delay(500);
-}
-
-void displaySensorOffsets(const adafruit_bno055_offsets_t &calibData)
-{
-    Serial.println("\nCalibration offsets \n");
-    Serial.print("Accelerometer: ");
-    Serial.print(calibData.accel_offset_x); Serial.print(" ");
-    Serial.print(calibData.accel_offset_y); Serial.print(" ");
-    Serial.print(calibData.accel_offset_z); Serial.print(" ");
-
-    Serial.print("\nGyro: ");
-    Serial.print(calibData.gyro_offset_x); Serial.print(" ");
-    Serial.print(calibData.gyro_offset_y); Serial.print(" ");
-    Serial.print(calibData.gyro_offset_z); Serial.print(" ");
-
-    Serial.print("\nMag: ");
-    Serial.print(calibData.mag_offset_x); Serial.print(" ");
-    Serial.print(calibData.mag_offset_y); Serial.print(" ");
-    Serial.print(calibData.mag_offset_z); Serial.print(" ");
-
-    Serial.print("\nAccel Radius: ");
-    Serial.print(calibData.accel_radius);
-
-    Serial.print("\nMag Radius: ");
-    Serial.print(calibData.mag_radius);
-}
-
 
 // This is the function that the interrupt calls to increment the rotation count
 void isr_rotation () {
@@ -742,135 +603,72 @@ ContactBounceTime = millis();
 
 }
 
-uint16_t get_compass_heading() {
-  // put your main code here, to run repeatedly:
-uint8_t system, gyro, accel, mg = 0;
-bno.getCalibration(&system, &gyro, &accel, &mg);
-imu::Vector<3> acc =bno.getVector(Adafruit_BNO055::VECTOR_ACCELEROMETER);
-imu::Vector<3> gyr =bno.getVector(Adafruit_BNO055::VECTOR_GYROSCOPE);
-imu::Vector<3> mag =bno.getVector(Adafruit_BNO055::VECTOR_MAGNETOMETER);
-//measured value of tilt in x
-thetaM=-atan2(acc.x()/9.8,acc.z()/9.8)/2/3.141592654*360;
-//measured value of tilt in y
-phiM=-atan2(acc.y()/9.8,acc.z()/9.8)/2/3.141592654*360;
-//filtered value for tilt in y
-phiFnew=.95*phiFold+.05*phiM;
-//filtered value for tilt in x
-thetaFnew=.95*thetaFold+.05*thetaM;
- //this is the time through one loop of program
-dt=(millis()-millisOld)/1000.;
-millisOld=millis();
-//measures tilt in x with filter to remove vibration but still quick to respond.  lesson 9
-//complimentary filter
-theta=(theta+gyr.y()*dt)*.95+thetaM*.05;
-//measures tilt in y with filter to remove vibration but still quick to respond.  lesson 9
-phi=(phi-gyr.x()*dt)*.95+ phiM*.05;
+int get_heading(float acc[3], float mag[3], float p[3])
+{
+  float W[3], N[3]; //derived direction vectors
 
-thetaG=thetaG+gyr.y()*dt;
-phiG=phiG-gyr.x()*dt;
- 
-phiRad=phi/360*(2*3.14);
-thetaRad=theta/360*(2*3.14);
- 
- //tilt compensated x
-Xm=mag.x()*cos(thetaRad)-mag.y()*sin(phiRad)*sin(thetaRad)+mag.z()*cos(phiRad)*sin(thetaRad);
-//tilt compensated y
-Ym=mag.y()*cos(phiRad)+mag.z()*sin(phiRad);
- //compass heading
-psi=atan2(Ym,Xm)/(2*3.14)*360;
- 
-// Serial.print(acc.x()/9.8);
-// Serial.print(",");
-// Serial.print(acc.y()/9.8);
-// Serial.print(",");
-// Serial.print(acc.z()/9.8);
-// Serial.print(",");
-// Serial.print(accel);
-// Serial.print(",");
-// Serial.print(gyro);
-// Serial.print(",");
-// Serial.print(mg);
-// Serial.print(",");
-// Serial.print(system);
-// Serial.print(",");
-// Serial.print(thetaM);
-// Serial.print(",");
-// Serial.print(phiM);
-// Serial.print(",");
-// Serial.print(thetaFnew);
-// Serial.print(",");
-// Serial.print(phiFnew);
-// Serial.print(",");
-// Serial.print(thetaG);
-// Serial.print(",");
-// Serial.print(phiG);
-// Serial.print(",");
-// Serial.print(theta);
-// Serial.print(",");
-// Serial.print(phi);
-// Serial.print(",");
-// Serial.println(psi);
- 
-phiFold=phiFnew;
-thetaFold=thetaFnew;
- psi = psi + 180;
- if(psi >= 360) {
-   psi = psi -360;
- }
- return((int)psi);
-//delay(BNO055_SAMPLERATE_DELAY_MS);
+  // cross "Up" (acceleration vector, g) with magnetic vector (magnetic north + inclination) with  to produce "West"
+  vector_cross(acc, mag, W);
+  vector_normalize(W);
+
+  // cross "West" with "Up" to produce "North" (parallel to the ground)
+  vector_cross(W, acc, N);
+  vector_normalize(N);
+
+  // compute heading in horizontal plane, correct for local magnetic declination
+  
+  int heading = round(atan2(vector_dot(W, p), vector_dot(N, p)) * 180 / M_PI + declination);
+  heading = -heading; //conventional nav, heading increases North to East
+  heading = (heading + 720)%360; //apply compass wrap
+  return heading;
 }
 
-void eeprom_test(){
-  uint32_t max_addr;
-  //variables for calibration read from memory
-int test = 55;
-      // Try to determine the size by writing a value and seeing if it changes the first byte
-  Serial.println("Testing size!");
-  for (max_addr = 1; max_addr < 0x7FFF; max_addr++) {
-    if (i2ceeprom.read(max_addr) != test)
-      continue; // def didnt wrap around yet
+// subtract offsets and correction matrix to accel and mag data
 
-    // maybe wraped? try writing the inverse
-    if (! i2ceeprom.write(max_addr, (byte)~test)) {
-        Serial.print("Failed to write address 0x");
-        Serial.println(max_addr, HEX);
-    }
+void get_scaled_IMU(float Axyz[3], float Mxyz[3]) {
+  byte i;
+  float temp[3];
+    Axyz[0] = imu.ax;
+    Axyz[1] = imu.ay;
+    Axyz[2] = imu.az;
+    Mxyz[0] = imu.mx;
+    Mxyz[1] = imu.my;
+    Mxyz[2] = imu.mz;
+  //apply offsets (bias) and scale factors from Magneto
+  for (i = 0; i < 3; i++) temp[i] = (Axyz[i] - A_B[i]);
+  Axyz[0] = A_Ainv[0][0] * temp[0] + A_Ainv[0][1] * temp[1] + A_Ainv[0][2] * temp[2];
+  Axyz[1] = A_Ainv[1][0] * temp[0] + A_Ainv[1][1] * temp[1] + A_Ainv[1][2] * temp[2];
+  Axyz[2] = A_Ainv[2][0] * temp[0] + A_Ainv[2][1] * temp[1] + A_Ainv[2][2] * temp[2];
+  vector_normalize(Axyz);
 
-    // read address 0x0 again
-    uint8_t val0 = i2ceeprom.read(0);
-
-    // re-write the old value
-    if (! i2ceeprom.write(max_addr, test)) {
-        Serial.print("Failed to re-write address 0x");
-        Serial.println(max_addr, HEX);
-    }    
-
-    // check if addr 0 was changed
-    if (val0 == (byte)~test) {
-      Serial.println("Found max address");
-      break;
-    }
-  }
-  Serial.print("This EEPROM can store ");
-  Serial.print(max_addr);
-  Serial.println(" bytes");
+  //apply offsets (bias) and scale factors from Magneto
+  for (int i = 0; i < 3; i++) temp[i] = (Mxyz[i] - M_B[i]);
+  Mxyz[0] = M_Ainv[0][0] * temp[0] + M_Ainv[0][1] * temp[1] + M_Ainv[0][2] * temp[2];
+  Mxyz[1] = M_Ainv[1][0] * temp[0] + M_Ainv[1][1] * temp[1] + M_Ainv[1][2] * temp[2];
+  Mxyz[2] = M_Ainv[2][0] * temp[0] + M_Ainv[2][1] * temp[1] + M_Ainv[2][2] * temp[2];
+  vector_normalize(Mxyz);
 }
 
-// float measure_wind_speed() {
-// uint16_t wind_speed_time_interval= 10000; //value in ms
-// uint32_t wind_speed_time = 0;
-// float WindSpeed = 0;
-// if ((millis() - wind_speed_time) > wind_speed_time_interval) {
-// // Only update the display if change greater than 2 degrees.
-//   wind_speed_time = millis();
-//   WindSpeed = Rotations * 2.25 / (millis() - wind_speed_time) * 1000;
-// Rotations = 0;  // Set Rotations count to 0 ready for calculations
-// // convert to mph using the formula V=P(2.25/T)
-// // V = P(2.25/3) = P * 0.75
-// }
-// return WindSpeed;
-// }
+// basic vector operations
+void vector_cross(float a[3], float b[3], float out[3])
+{
+  out[0] = a[1] * b[2] - a[2] * b[1];
+  out[1] = a[2] * b[0] - a[0] * b[2];
+  out[2] = a[0] * b[1] - a[1] * b[0];
+}
+
+float vector_dot(float a[3], float b[3])
+{
+  return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+}
+
+void vector_normalize(float a[3])
+{
+  float mag = sqrt(vector_dot(a, a));
+  a[0] /= mag;
+  a[1] /= mag;
+  a[2] /= mag;
+}
 
 uint16_t measure_wind_direction(){
 
@@ -891,41 +689,8 @@ CalDirection = CalDirection - 360;
 if(CalDirection < 0)
 CalDirection = CalDirection + 360;
 
-//delay(100);
-
-  // if(abs(CalDirection - LastValue) > 5)
-  // {
-  //   Serial.print("Vanevalue -----------------\n");
-  // Serial.print(VaneValue); Serial.print("\t\t");
-  // Serial.print(CalDirection); Serial.print("\t\t");
-  // getHeading(CalDirection);
-  // LastValue = CalDirection;
-  // }
-
 return CalDirection;
 }
-
-// Converts compass direction to heading
-void printHeading(int direction) {
-if(direction < 22)
-Serial.println("N");
-else if (direction < 67)
-Serial.println("NE");
-else if (direction < 112)
-Serial.println("E");
-else if (direction < 157)
-Serial.println("SE");
-else if (direction < 212)
-Serial.println("S");
-else if (direction < 247)
-Serial.println("SW");
-else if (direction < 292)
-Serial.println("W");
-else if (direction < 337)
-Serial.println("NW");
-else
-Serial.println("N");
-} 
 
 String calculateHeading(int direction) {
   String heading = "xx";
@@ -951,19 +716,6 @@ heading = "N";
 return heading;
 } 
 
-void print_heading_pitch_roll() {
-      /* Get a new sensor event */
-  sensors_event_t event;
-  bno.getEvent(&event);
-  /* The WebSerial 3D Model Viewer expects data as heading, pitch, roll */
-  Serial.print(F("Heading, pitch, roll: "));
-  Serial.print((float)event.orientation.x);
-  Serial.print(F(", "));
-  Serial.print((float)event.orientation.y);
-  Serial.print(F(", "));
-  Serial.print((float)event.orientation.z);
-  Serial.println(F(""));
-}
 
 void measure_current_voltage_power(float& shuntvoltage, float& busvoltage, float& current_mA, float& loadvoltage, float& power_mW){
 
@@ -996,46 +748,64 @@ void print_current_voltage_power_avg(uint32_t busvoltage, uint32_t shuntvoltage,
   Serial.println("");
 }
 
-
-uint16_t get_event_compass_heading(){
-sensors_event_t event;
-  bno.getEvent(&event);
-  
-  /* Display the floating point data */
-  Serial.print("X: ");
-  Serial.print(event.orientation.x, 4);
-  Serial.print("\tY: ");
-  Serial.print(event.orientation.y, 4);
-  Serial.print("\tZ: ");
-  Serial.print(event.orientation.z, 4);
-  Serial.println("");
-
-  Serial.println("\n\n");
-
-  compass_heading = (int)(event.orientation.x + 0);
-
-  if(compass_heading > 360) {
-    compass_heading = compass_heading - 360;
+void printDebugInfo() {
+  // If there's an electrical error on the 1-Wire bus you'll get a CRC error
+  // Just ignore the temperature measurement and try again
+  if (sensor.crcError()) {
+    Serial.print("CRC Error ");
   }
-  
-  Serial.print("compass heading:  ");
-  Serial.print(compass_heading, 4);
-  return compass_heading;
+
+  // Print the sensor type
+  const char *type;
+  switch(sensor.type()) {
+    case WIRE_DS1820: type = "DS1820"; break;
+    case WIRE_DS18B20: type = "DS18B20"; break;
+    case WIRE_DS1822: type = "DS1822"; break;
+    case WIRE_DS2438: type = "DS2438"; break;
+    default: type = "UNKNOWN"; break;
+  }
+  Serial.print(type);
+
+  // Print the ROM (sensor type and unique ID)
+  uint8_t addr[8];
+  sensor.addr(addr);
+  Serial.printf(
+    " ROM=%02X%02X%02X%02X%02X%02X%02X%02X",
+    addr[0], addr[1], addr[2], addr[3], addr[4], addr[5], addr[6], addr[7]
+  );
+
+  // Print the raw sensor data
+  uint8_t data[9];
+  sensor.data(data);
+  Serial.printf(
+    " data=%02X%02X%02X%02X%02X%02X%02X%02X%02X",
+    data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7], data[8]
+  );
 }
 
 
-//removed from line 364
-  // /* The WebSerial 3D Model Viewer also expects data as roll, pitch, heading */
-  // imu::Quaternion quat = bno.getQuat();
+// uint16_t get_event_compass_heading(){
+// sensors_event_t event;
+//   bno.getEvent(&event);
   
-  // Serial.print(F("Quaternion: "));
-  // Serial.print((float)quat.w());
-  // Serial.print(F(", "));
-  // Serial.print((float)quat.x());
-  // Serial.print(F(", "));
-  // Serial.print((float)quat.y());
-  // Serial.print(F(", "));
-  // Serial.print((float)quat.z());
-  // Serial.println(F(""));
+//   /* Display the floating point data */
+//   Serial.print("X: ");
+//   Serial.print(event.orientation.x, 4);
+//   Serial.print("\tY: ");
+//   Serial.print(event.orientation.y, 4);
+//   Serial.print("\tZ: ");
+//   Serial.print(event.orientation.z, 4);
+//   Serial.println("");
 
-  /* Also send calibration data for each sensor. */
+//   Serial.println("\n\n");
+
+//   compass_heading = (int)(event.orientation.x + 0);
+
+//   if(compass_heading > 360) {
+//     compass_heading = compass_heading - 360;
+//   }
+  
+//   Serial.print("compass heading:  ");
+//   Serial.print(compass_heading, 4);
+//   return compass_heading;
+// }
